@@ -1,4 +1,20 @@
+body{
+  font-family: sans-serif;
+  color: black;
+  margin-left: 150;
+  margin-right: 150;
+}
 h1 {
-    color: hotpink;
-    font-family: cursive;
-  }
+    position: sticky;
+    text-align: center;
+    margin-top: 2.5em;
+    font-size: 5em;
+}
+h2{
+    text-align: center;
+}
+section{
+    position: relative;
+    margin-top: 50;
+    margin-bottom: 50;
+}

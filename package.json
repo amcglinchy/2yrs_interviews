@@ -3,7 +3,8 @@
   "source": "src/index.html",
   "scripts": {
     "start": "parcel",
-    "build": "parcel build"},
+    "build": "parcel build"
+  },
   "version": "1.0.0",
   "main": "index.js",
   "repository": "https://github.com/amcglinchy/2yrs_interviews.git",
@@ -13,6 +14,10 @@
     "parcel": "^2.10.3"
   },
   "dependencies": {
-    "d3": "^7.8.5"
+    "bootstrap": "5.3.2",
+    "d3": "^7.8.5",
+    "gsap": "^3.12.3",
+    "scrollmagic": "^2.0.8",
+    "scrollmagic-plugin-gsap": "^1.0.4"
   }
 }
