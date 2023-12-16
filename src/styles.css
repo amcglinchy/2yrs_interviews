@@ -19,11 +19,17 @@ section{
     margin-top: 50;
     margin-bottom: 100;
 }
-#first-bar-section,
-#second-bar-section {
-  height: 100vh;
+#container {
+  position: relative;
 }
 
-#second-bar-section {
-  transform: translateY(100%);
+/* Add a class for each type of bar to control their z-index */
+.bar,
+.raceBar {
+  position: absolute;
+}
+
+/* Style for the race bars */
+.raceBar {
+  z-index: 0; /* Adjust the z-index as needed */
 }
