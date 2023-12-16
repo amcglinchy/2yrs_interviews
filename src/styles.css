@@ -3,6 +3,7 @@ body{
   color: black;
   margin-left: 150;
   margin-right: 150;
+  background-color: #fffafa;
 }
 h1 {
     position: sticky;
@@ -16,5 +17,13 @@ h2{
 section{
     position: relative;
     margin-top: 50;
-    margin-bottom: 50;
+    margin-bottom: 100;
+}
+#first-bar-section,
+#second-bar-section {
+  height: 100vh;
+}
+
+#second-bar-section {
+  transform: translateY(100%);
 }
