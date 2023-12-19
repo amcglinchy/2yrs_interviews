@@ -4,12 +4,14 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 /* CONSTANTS AND GLOBALS*/
+
+
 const width = window.innerWidth * 0.7,
     height = window.innerHeight * 0.8,
     m = { top: 20, bottom: 80, left: 40, right: 40 };
 let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races;
 let tl1, racexAxis, axisGroup;
-const additionalOffsetY = 100;
+const additionalOffsetY = 300;
 
 const raceColors = ["#3A5683", "#BCD979", "#B15E6C", "#FF7F11", "#93BEDF", "#35A66D"];
 
@@ -75,8 +77,8 @@ function init() {
 
     yScale = d3.scaleBand()
     .domain(['Total Interviews', 'Unique Persons', 'IDs More Than Once'])
-    .range([m.top, height - m.bottom]) // Adjust range to fit within SVG
-    .padding(0.2); // Adjust padding for spacing between bars
+    .range([m.top, height - m.bottom])
+    .padding(0.2);
     
     raceyScale = d3.scaleLinear()
         .domain([0, d3.max(races, race => state.raceData.get(race).length)])
@@ -92,11 +94,9 @@ function init() {
         .tickSize(0)
         .tickPadding(10); 
         
-    
-
 
     // CREATE SVG
-    svg = d3.select("#container")
+    svg = d3.select(".svg-container")
     .append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -144,7 +144,7 @@ function init() {
 
     countText = svg
     .append("text")
-    .attr("x", xScale(state.interviews.length)+10) // Adjust the x position as needed
+    .attr("x", xScale(state.interviews.length)+10)
     .attr("y", yScale('Total Interviews') + yScale.bandwidth() / 2)
     .attr("dy", ".35em")
     .text(0)
@@ -183,90 +183,20 @@ function init() {
     draw();
 }
 
-/* DRAW FUNCTION */
-
-// function draw() {
-//     // CREATE FIRST GSAP TIMELINE FOR SCROLL EFFECTS
-//     tl1 = gsap.timeline({
-//         scrollTrigger: {
-//             trigger: "#container",
-//             start: "top center",
-//             end: "+=300", 
-//             markers: true,
-//             toggleActions: "play none none reverse",
-//         },
-//     });
-//     let countObj = { value: 0 };
-
-//     // ADD INITIAL BARS TO TIMELINE
-//     tl1
-//     .add('start')
-//     .to(".bar1", {width: xScale(state.interviews.length) - m.right, duration: 8}, 'start')
-//     .to(countObj, {
-//         value: state.interviews.length,
-//         duration: 8,
-//         onStart: () => {
-//             gsap.to(countText.node(), { attr: { opacity: 1 }, duration: 8 });
-//         },
-//         onUpdate: () => {
-//             countText.text(Math.round(countObj.value) + " interviews");
-//         }
-//     }, 'start')
-//     .to(".bar2", {opacity: 1, delay: 1, duration: .3}, ">")
-//     .to(".bar2text", {opacity: 1, delay: 1, duration: .3}, ">")
-//     .to(".bar3", {opacity: 1, y: yScale('IDs More Than Once'), duration: 2}, ">")
-//     .to(".bar3text", {opacity: 1, duration: .3}, ">");
-    
-//     //CREATE SECOND TIMELINE
-//     const secondPartTl = gsap.timeline({
-//         scrollTrigger: {
-//             start: "top+=1000 bottom",
-//             end: "+=500", 
-//             markers: true,
-//             toggleActions: "play none none reverse", 
-//         },
-//     });
-//     // FADE OUT BAR 1 AND 3
-//     secondPartTl
-//     .to(".bar1, .count-text, .bar2text, .bar3, .bar3text", { y: -200, opacity: 0, duration: 0.5, stagger: 0.1 }, 0) // Adjust the y value for the desired fly-out effect
-
-//     // ADD SECOND PART TL TO FIRST TL
-//     tl1.add(secondPartTl, ">");
-//     tl1.add(secondPartTl, ">");
-
-    
-//     tl1.to(".bar2", {
-//         height: (i) => height - m.bottom - raceyScale(state.raceData.get(races[i]).length),
-//         x: (i) => racexScale(races[i]),
-//         y: (i) => raceyScale(state.raceData.get(races[i]).length)- m.bottom*2,
-//         width: racexScale.bandwidth(),
-//         fill: (i) => raceColors[i % raceColors.length],
-//         duration: 1,
-//         ease: "power1.inOut"
-//     }, ">")
-    
-//     const axisYPosition = d3.max(races, race => {
-//         return raceyScale(state.raceData.get(race).length);
-//     }) + 10;
-    
-//     tl1.to(".raceBarsAxis", {
-//         attr: { transform: `translate(${m.left}, ${axisYPosition})` },
-//         opacity: 1,
-//         duration: 1,
-//         ease: "power1.inOut"
-//     }, "<");
-
-// };
-
 function draw() {
+
     // CREATE FIRST GSAP TIMELINE FOR SCROLL EFFECTS
     tl1 = gsap.timeline({
         scrollTrigger: {
-            trigger: "#container",
+            trigger: "#section1",
             start: "top center",
-            end: "+=500", 
-            markers: true,
+            end: "top top+=100%",
+            markers: {startColor: "red", endColor: "red"},
             toggleActions: "play none none reverse",
+            onLeave: () => {
+                // Enable tlMoveDown when tlFlyOut leaves the viewport
+                tlFlyOut.scrollTrigger.enable();
+            }
         },
     });
     let countObj = { value: 0 };
@@ -293,9 +223,15 @@ function draw() {
     // Timeline for flying out rect1, rect3, and their texts
     const tlFlyOut = gsap.timeline({
         scrollTrigger: {
-            trigger: "#container",
-            start: "top+=500 bottom",
-            markers: true
+            trigger: "#section2",
+            start: "top center",
+            markers: {startColor: "blue", endColor: "blue"},
+            enabled: false,
+            end: "top+=500 center",
+            onLeave: () => {
+                // Enable tlMoveDown when tlFlyOut leaves the viewport
+                tlMoveDown.scrollTrigger.enable();
+            }
         }
     });
 
@@ -306,51 +242,60 @@ function draw() {
     // Timeline for moving rect2 down
     const tlMoveDown = gsap.timeline({
         scrollTrigger: {
-            trigger: "#container",
-            start: "top+=600 bottom",
+            trigger: "#section2",
+            start: "top center",
             end: "top+=900 bottom",
             scrub: true,
-            markers: true
+            markers: {startColor: "pink", endColor: "pink"},
+            enabled: false
         }
     });
 
     tlMoveDown.to(".bar2", {
-        y: "+=300", // Adjust as needed
-        duration: 1, // Synchronize with the scrub duration
+        y: "+=300",
+        duration: 1,
         ease: "none"
     });
+
+    gsap.set(".raceBarsAxis", { x: "-100%" });
 
     
     // ScrollTrigger for splitting rect2 into vertical bars
     const barSplitTrigger = ScrollTrigger.create({
-        trigger: "#container",
-        start: "top+=800 bottom", // Adjust as needed
-        end: "bottom bottom",
-        markers: true,
+        trigger: "#section3",
+        start: "top center",
+        end: "top+=600 bottom",
+        markers: {startColor: "black", endColor: "black"},
         onEnter: () => {
             gsap.to(".bar2", {
-                // Transformations to vertical bars
                 height: (i) => height - m.bottom - raceyScale(state.raceData.get(races[i]).length),
                 x: (i) => racexScale(races[i]),
-                y: (i) => raceyScale(state.raceData.get(races[i]).length) - m.bottom * 2 + additionalOffsetY,
+                y: (i) => raceyScale(state.raceData.get(races[i]).length) - m.bottom + additionalOffsetY,
                 width: racexScale.bandwidth(),
                 fill: (i) => raceColors[i % raceColors.length],
-                duration: 1,
+                duration: 2,
                 ease: "power1.inOut",
-                stagger: 0.1 // Optional: Add stagger for a sequential effect
+                stagger: 0.1
             });
 
             const axisYPosition = d3.max(races, race => {
                 return raceyScale(state.raceData.get(race).length);
-            }) + 10;
+            }) + additionalOffsetY+100;
             
             gsap.to(".raceBarsAxis", {
                 attr: { transform: `translate(${m.left}, ${axisYPosition})` },
                 opacity: 1,
-                duration: 1,
+                delay: 2,
+                duration: 2,
                 ease: "power1.inOut"
             });
+        },
+        onRefresh: self => {
+            if (window.scrollY < self.start) {
+                gsap.set(".raceBarsAxis", { opacity: 0 });
+            }
         }
     });
+
 
 };

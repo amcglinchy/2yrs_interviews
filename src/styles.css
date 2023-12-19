@@ -19,11 +19,30 @@ section{
     margin-top: 50;
     margin-bottom: 100;
 }
-#container {
-  position: relative;
-}
-
 
 .raceBarsAxis .domain {
   stroke: none;
+}
+.content-container {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.text-sections {
+  width: 20%; /* Adjust as needed */
+  /* Other styling as needed */
+}
+
+.svg-container {
+  width: 80%;
+  max-width: 600px;
+  height: auto;
+  position: sticky;
+  top: 0;
+}
+
+#container svg {
+  width: 100%;
+  height: auto;
 }
