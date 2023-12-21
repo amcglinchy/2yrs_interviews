@@ -8,16 +8,17 @@ gsap.registerPlugin(ScrollTrigger);
 
 const width = window.innerWidth * 0.7,
     height = window.innerHeight * 0.8,
-    m = { top: 20, bottom: 80, left: 40, right: 40 };
+    m = { top: 20, bottom: 80, left: 20, right: 20 };
 let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races, deniedCircle, grantedCircle;
-let tl1, racexAxis, axisGroup;
-let leftCenterX, rightCenterX;
+let tl1, racexAxis, axisGroup, interviewTypeData, totalInterviews;
+let leftCenterX, rightCenterX, typeCircles, totalCircle, radiusScale, typeColorScale;
 let grantedLabel, deniedLabel;
 const additionalOffsetY = 200;
 const circleRadius = 50;
 const initialCircleRadius = 0;
 const finalRadius = 100;
 const circleVerticalCenter = height / 2;
+const maxRadius = 50;
 
 
 let deniedCenterX,grantedCenterX;
@@ -27,10 +28,14 @@ const svgCenterY = height / 2;
 
 let grantedCenterY = height / 2; 
 
+function arePieChartsInteractive() {
+    return window.scrollY >= document.querySelector("#section4").offsetTop;
+}
 
 
-const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
-const raceColors = ["#3A5683", "#BCD979", "#B15E6C", "#FF7F11", "#93BEDF", "#35A66D"];
+
+const colors = ['#2292A4', '#D96C06', '#FADF63', '#A67DB8', '#9467bd', '#632B30'];
+const barColors = ["#3A5683", "#BCD979", "#B15E6C", "#FF7F11", "#93BEDF", "#35A66D"];
 
 /* APPLICATION STATE */
 let state = {
@@ -38,7 +43,8 @@ let state = {
     raceData: [],
     individuals: [],
     moreThanOnce: [],
-    outcomeData: []
+    outcomeData: [],
+    intTypeData: [],
 };
 
 /* LOAD DATA */
@@ -103,9 +109,24 @@ function init() {
 
 
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
+    state.intTypeData = d3.group(state.interviews, d => d.parole_board_interview_type);
     state.outcomeData = d3.group(state.interviews, d=>d.interview_decision);
     outcomes = Array.from(state.outcomeData.keys());
     races = Array.from(state.raceData.keys());
+    intTypes = Array.from(state.intTypeData.keys());
+
+    interviewTypeData = intTypes.map(type => ({
+        type: type,
+        count: state.intTypeData.get(type).length
+    }));
+
+    interviewTypeData.forEach(d => {
+        d.finalX = Math.random() * width;  // Random X coordinate
+        d.finalY = Math.random() * height; // Random Y coordinate
+    });
+    
+    // Calculate total interviews for sizing the large circle
+    totalInterviews = interviewTypeData.reduce((sum, { count }) => sum + count, 0);
 
     function preparePieData(outcome) {
         return races.map(race => {
@@ -127,9 +148,9 @@ function init() {
     
     const deniedPieData = preparePieData("DENIED");
     const grantedPieData = preparePieData("GRANTED");
-    
 
-    // CREATE SCALES FOR BARS
+
+    // CREATE SCALES
     xScale = d3.scaleLinear()
     .domain([0, d3.max([state.interviews.length, state.individuals.length, state.moreThanOnce.length])])
     .range([m.left, width - m.right]);
@@ -138,20 +159,6 @@ function init() {
     .domain(['Total Interviews', 'Unique Persons', 'IDs More Than Once'])
     .range([m.top, height - m.bottom])
     .padding(0.2);
-    
-    raceyScale = d3.scaleLinear()
-        .domain([0, d3.max(races, race => state.raceData.get(race).length)])
-        .range([height - m.bottom, m.top]);
-
-    racexScale = d3.scaleBand()
-        .domain(races)
-        .range([m.left, width - m.right])
-        .padding(0.1);
-
-    racexAxis = d3.axisBottom(racexScale)
-        .tickFormat((d, i) => races[i])
-        .tickSize(0)
-        .tickPadding(10); 
         
     outcomeyScale = d3.scaleLinear()
         .domain([0, d3.max(outcomes, outcome => state.outcomeData.get(outcome).length)])
@@ -174,6 +181,13 @@ function init() {
     .domain(races)
     .range(colors);
 
+    typeColorScale = d3.scaleOrdinal()
+    .domain(intTypes)
+    .range(barColors);
+
+    radiusScale = d3.scaleSqrt()
+    .domain([0, totalInterviews]) // From 0 to the total number of interviews
+    .range([0, maxRadius]);
         
 
     // CREATE SVG
@@ -341,6 +355,9 @@ function init() {
 
     svg.selectAll('.denied-slice, .granted-slice')
     .on('mouseover', function(event, d) {
+        if (!arePieChartsInteractive()) {
+            return;
+        }
         svg.selectAll('.denied-slice, .granted-slice')
            .transition().duration(300)
            .style('opacity', 0.5);
@@ -359,6 +376,9 @@ function init() {
                .style('top', (event.pageY - 28) + 'px');
     })
     .on('mouseout', function() {
+        if (!arePieChartsInteractive()) {
+            return;
+        }
         svg.selectAll('.denied-slice, .granted-slice')
            .transition().duration(300)
            .style('opacity', 1)
@@ -369,8 +389,25 @@ function init() {
         tooltip.transition().duration(300).style('opacity', 0);
     });
 
+// Large circle for total interviews
+ totalCircle = svg.append("circle")
+    .attr("class", "total-interviews-circle")
+    .attr("cx", width / 2)
+    .attr("cy", height / 2)
+    .attr("r", radiusScale(totalInterviews))
+    .attr("fill", "#1169e4")
+    .attr("opacity", "0");
 
-    
+// Smaller circles for interview types
+ typeCircles = svg.selectAll(".type-circle")
+    .data(interviewTypeData)
+    .enter()
+    .append("circle")
+    .attr("class", "type-circle")
+    .attr("cx", width / 2) // Start at the center
+    .attr("cy", height / 2) // Start at the center
+    .attr("r", 0) // Start with radius 0
+    .attr("fill", d => typeColorScale(d.type)); // Assign color based on type
 
 
     draw();
@@ -483,7 +520,7 @@ function draw() {
                     x: (i) => outcomexScale(outcomes[i]),
                     y: (i) => outcomeyScale(state.outcomeData.get(outcomes[i]).length) - m.bottom,
                     width: outcomexScale.bandwidth(),
-                    fill: (i) => raceColors[i % raceColors.length],
+                    fill: (i) => barColors[i % barColors.length],
                     duration: 2,
                     ease: "power1.inOut",
                     stagger: 0.1
@@ -512,11 +549,18 @@ function draw() {
         scrollTrigger: {
             trigger: "#section3",
             start: "top center",
-            end: "bottom center",
+            end: "center center",
             scrub: true,
             markers: true
         }
     });
+
+    moveBarsTimeline.to(".bar1", {
+        y: (i, target) => height - m.bottom - outcomeyScale(state.outcomeData.get(outcomes[i]).length) - target.getBBox().height,
+        duration: 1,
+        stagger: 0.1,
+        ease: 'power1.inOut'
+    }, 0);
 
     moveBarsTimeline.to('.bar1:not(.DENIED):not(.GRANTED)', {
         y: "-=300",
@@ -593,6 +637,7 @@ function draw() {
 
     moveBarsTimeline.to('.circle-label', {
         opacity: 1,
+        delay: 1,
         duration: 1,
         ease: 'power1.inOut'
     }, ">");
@@ -602,7 +647,7 @@ function draw() {
         scrollTrigger: {
             trigger: "#section4",
             start: "top center",
-            end: "bottom center",
+            end: "center center",
             scrub: true,
             markers: true
         }
@@ -613,7 +658,7 @@ function draw() {
         opacity: 0,
         duration: 1,
         ease: 'power1.out'
-    });
+    }, ">");
     
     // Fade in the pie slices for 'DENIED'
     pieTransitionTimeline.to('.denied-slice', {
@@ -630,6 +675,42 @@ function draw() {
         duration: 1,
         ease: 'power1.in'
     }, '<');
+
+    const circlBreak = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section5", // Adjust this as needed
+            start: "top center",
+            end: "bottom center",
+            scrub: true,
+            markers: true
+        }
+    });
+    
+    circlBreak.to('total-interview-circle', {
+        opacity: 1,
+        duration: 1,
+        ease: 'power1.in'
+    })
+    
+    circlBreak.to(typeCircles.nodes(), {
+        duration: 1,
+        attr: function(i) {
+            return {
+                cx: interviewTypeData[i].finalX,
+                cy: interviewTypeData[i].finalY,
+                r: radiusScale(interviewTypeData[i].count)
+            };
+        },
+        stagger: 0.1 // Stagger the animation of each circle
+    }, 0);
+    
+    // Shrink the large circle
+    circlBreak.to(totalCircle.node(), {
+        duration: 1,
+        r: 0, // Shrink to radius 0
+        ease: "power1.inOut"
+    }, 0);
+    
     
     
 };

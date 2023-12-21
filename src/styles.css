@@ -1,13 +1,11 @@
 body{
   font-family: sans-serif;
   color: black;
-  margin-left: 80;
-  margin-right: 80;
+  margin: 0 80px;
   background-color: #fffafa;
 }
 
 h1 {
-    position: sticky;
     text-align: center;
     margin-top: 2.5em;
     font-size: 5em;
@@ -16,7 +14,6 @@ h2{
     text-align: center;
 }
 section{
-    position: relative;
     margin-top: 50;
     margin-bottom: 100;
 }
@@ -26,35 +23,27 @@ section{
 }
 .content-container {
   display: flex;
-  align-items: start;
   justify-content: space-between;
 }
 
 .text-sections {
-  width: 30%; /* Adjust as needed */
-  /* Other styling as needed */
+  width: 30%; 
 }
-
-/* .svg-container {
-  width: 80%;
-  max-width: 600px;
-  height: auto;
-  position: sticky;
-  top: 0;
-} */
 
 .svg-container {
   position: sticky;
-  top: 10vh;  /* Adjust this value based on your layout */
-  height: 80vh; /* Set a fixed height */
+  top: 10vh;
+  width: 70%; 
+  height: 80vh;
   display: flex;
-  align-items: center; /* This vertically centers the SVG in the container */
+  align-items: center;
+  justify-content: flex-end; 
   z-index: 10;
 }
 
 svg {
-  width: 70%; /* Adjust based on your requirements */
-  height: auto; /* Keeps the SVG aspect ratio */
+  width: 70%; 
+  height: auto; 
 }
 
 #container svg {
@@ -63,19 +52,18 @@ svg {
 }
 
 section p {
-  opacity: 1; /* Start fully visible */
-  transition: opacity 0.3s ease-in-out; /* Smooth transition for opacity */
-  /* Other styles as needed */
+  opacity: 1; 
+  transition: opacity 0.3s ease-in-out; 
 }
 
 section {
-  min-height: 100vh; /* Each section takes at least the height of the viewport */
+  min-height: 100vh; 
   display: flex;
-  align-items: center; /* Center content vertically */
-  justify-content: center; /* Center content horizontally */
-  opacity: 0; /* Start with sections hidden */
-  padding: 50px; /* Add some padding */
-  transition: opacity 0.3s ease-in-out; /* Smooth transition for opacity */
+  align-items: center; 
+  justify-content: center; 
+  opacity: 0; 
+  padding: 50px; 
+  transition: opacity 0.3s ease-in-out; 
 }
 
 .tooltip {
