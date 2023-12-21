@@ -9,10 +9,27 @@ gsap.registerPlugin(ScrollTrigger);
 const width = window.innerWidth * 0.7,
     height = window.innerHeight * 0.8,
     m = { top: 20, bottom: 80, left: 40, right: 40 };
-let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races;
+let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races, deniedCircle, grantedCircle;
 let tl1, racexAxis, axisGroup;
-const additionalOffsetY = 300;
+let leftCenterX, rightCenterX;
+let grantedLabel, deniedLabel;
+const additionalOffsetY = 200;
+const circleRadius = 50;
+const initialCircleRadius = 0;
+const finalRadius = 100;
+const circleVerticalCenter = height / 2;
 
+
+let deniedCenterX,grantedCenterX;
+let deniedCenterY = height / 2; 
+const svgCenterX = width / 2;
+const svgCenterY = height / 2;
+
+let grantedCenterY = height / 2; 
+
+
+
+const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
 const raceColors = ["#3A5683", "#BCD979", "#B15E6C", "#FF7F11", "#93BEDF", "#35A66D"];
 
 /* APPLICATION STATE */
@@ -20,7 +37,8 @@ let state = {
     interviews: [],
     raceData: [],
     individuals: [],
-    moreThanOnce: []
+    moreThanOnce: [],
+    outcomeData: []
 };
 
 /* LOAD DATA */
@@ -36,6 +54,9 @@ function init() {
     // CREATE STATE ARRAYS FOR INDIVIDUALS &  MORE THAN ONCE
     const idMap = new Map();
     const moreThanOnce = [];
+
+    leftCenterX = svgCenterX - width / 6;
+    rightCenterX = svgCenterX + width / 6;
 
     state.interviews.forEach(item => {
         const id = item.id;
@@ -67,8 +88,46 @@ function init() {
         }
     });
 
+    state.interviews.forEach(d => {
+        if (d.interview_decision === "OPEN DATE" || d.interview_decision === "PAROLED") {
+            d.interview_decision = "GRANTED";
+        }
+        else if (d.interview_decision === "RCND&HOLD" || d.interview_decision === "RCND&RELSE"
+        || d.interview_decision === "REINSTATE"){
+            d.interview_decision = "OTHER";
+        }
+        else if(d.interview_decision === "NOT GRANTD"){
+            d.interview_decision = "DENIED"
+        }
+    });
+
+
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
+    state.outcomeData = d3.group(state.interviews, d=>d.interview_decision);
+    outcomes = Array.from(state.outcomeData.keys());
     races = Array.from(state.raceData.keys());
+
+    function preparePieData(outcome) {
+        return races.map(race => {
+            let filteredData = state.interviews.filter(d => {
+                // Adjusting for recoded interview_decision values
+                let matchesOutcome = false;
+                if (outcome === "GRANTED") {
+                    matchesOutcome = (d.interview_decision === "OPEN DATE" || d.interview_decision === "PAROLED" || d.interview_decision === "GRANTED");
+                } else if (outcome === "DENIED") {
+                    matchesOutcome = (d.interview_decision === "NOT GRANTD" || d.interview_decision === "DENIED");
+                }
+                let matchesRace = d.race__ethnicity === race;
+                return matchesRace && matchesOutcome;
+            });
+    
+            return { race: race, value: filteredData.length };
+        });
+    }
+    
+    const deniedPieData = preparePieData("DENIED");
+    const grantedPieData = preparePieData("GRANTED");
+    
 
     // CREATE SCALES FOR BARS
     xScale = d3.scaleLinear()
@@ -94,6 +153,28 @@ function init() {
         .tickSize(0)
         .tickPadding(10); 
         
+    outcomeyScale = d3.scaleLinear()
+        .domain([0, d3.max(outcomes, outcome => state.outcomeData.get(outcome).length)])
+        .range([height - m.bottom, m.top]);
+
+    outcomexScale = d3.scaleBand()
+        .domain(outcomes)
+        .range([m.left, width - m.right])
+        .padding(0.1);
+
+    outcomexAxis = d3.axisBottom(outcomexScale)
+        .tickFormat((d, i) => outcomes[i])
+        .tickSize(0)
+        .tickPadding(10); 
+
+    grantedCenterX = outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2;
+    deniedCenterX = outcomexScale('DENIED') + outcomexScale.bandwidth() / 2;
+
+    const raceColorScale = d3.scaleOrdinal()
+    .domain(races)
+    .range(colors);
+
+        
 
     // CREATE SVG
     svg = d3.select(".svg-container")
@@ -103,18 +184,16 @@ function init() {
     .attr("viewBox", `0 0 ${width} ${height}`)
     .attr("overflow", "visible");
 
-    //CREATE BARS AND TEXT
-    rect1 = svg
-    .selectAll(".bar1")
-    .data([state.interviews])
+    rect1 = svg.selectAll(".bar1")
+    .data(outcomes)
     .enter()
     .append("rect")
+    .attr("class", d => "bar1 " + d.replace(/\s+/g, ''))
     .attr("x", m.left)
-    .attr("y", yScale('Total Interviews'))
+    .attr("y", d => yScale(d.outcome))
     .attr("width", 0)
     .attr("height", yScale.bandwidth())
-    .attr("fill", "#1169e4")
-    .attr("class", "bar1");
+    .attr("fill", "#1169e4");
 
     rect2 = svg
     .selectAll(".bar2")
@@ -123,7 +202,7 @@ function init() {
     .append("rect")
     .attr("class", "bar2")
     .attr("x", m.left)
-    .attr("y", yScale('Unique Persons'))
+    .attr("y", 0)
     .attr("width", xScale(state.individuals.length))
     .attr("height", yScale.bandwidth())
     .attr("fill", "#ec2d93")
@@ -169,21 +248,150 @@ function init() {
     .attr("class", "bar3text")
     .attr("opacity", "0");
 
+
     axisGroup = svg.append("g")
-    .attr("class", "raceBarsAxis")
+    .attr("class", "outcomeBarsAxis")
     .attr("opacity", "0")
-    .call(racexAxis)
+    .call(outcomexAxis)
     .selectAll(".tick text")
-    .attr("transform", `translate(${racexScale.bandwidth() / 2}, 0)`)
+    .attr("transform", `translate(${outcomexScale.bandwidth() / 2}, 0)`)
     .style("text-anchor", "end")
     .attr("dx", "-.8em")
     .attr("dy", ".15em")
     .attr("transform", "rotate(-65)");
 
+    // Create circles for "DENIED" and "GRANTED"
+    deniedCircle = svg.append("circle")
+    .attr("cx", outcomexScale('DENIED') + outcomexScale.bandwidth() / 2)
+    .attr("cy", circleVerticalCenter)
+    .attr("r", initialCircleRadius)
+    .attr("fill","#BCD979") 
+    .attr("opacity", 0)
+    .classed("denied-circle", true);
+
+    grantedCircle = svg.append("circle")
+    .attr("cx", outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2)
+    .attr("cy", circleVerticalCenter)
+    .attr("r", initialCircleRadius)
+    .attr("fill", "#3A5683")
+    .attr("opacity", 0)
+    .classed("granted-circle", true);
+
+    deniedLabel = svg.append("text")
+    .text("DENIED")
+    .attr("x", leftCenterX)
+    .attr("y", svgCenterY + finalRadius + 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .attr("opacity", 0)
+    .classed("circle-label", true);
+
+    grantedLabel = svg.append("text")
+    .text("GRANTED")
+    .attr("x", rightCenterX)
+    .attr("y", svgCenterY + finalRadius + 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .attr("opacity", 0)
+    .classed("circle-label", true);
+
+    const pie = d3.pie()
+    .value(d => d.value)
+    .sort(null);
+
+    const deniedTotal = d3.sum(deniedPieData, d => d.value);
+    const grantedTotal = d3.sum(grantedPieData, d => d.value);
+
+    const deniedPie = pie(deniedPieData);
+    const grantedPie = pie(grantedPieData);
+
+    const arc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(finalRadius);
+
+    // Add slices for the DENIED pie chart
+    svg.selectAll('.denied-slice')
+    .data(deniedPie)
+    .enter()
+    .append('path')
+    .attr('class', d => `denied-slice ${d.data.race.replace(/\s+/g, '-')}`)
+    .attr('d', arc)
+    .attr('fill', d => raceColorScale(d.data.race))
+    .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
+    .attr("opacity", "0");
+
+    // Add slices for the GRANTED pie chart
+    svg.selectAll('.granted-slice')
+    .data(grantedPie)
+    .enter()
+    .append('path')
+    .attr('class', d => `granted-slice ${d.data.race.replace(/\s+/g, '-')}`)
+    .attr('d', arc)
+    .attr('fill', d => raceColorScale(d.data.race))
+    .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
+    .attr("opacity", "0");
+
+    const tooltip = d3.select('#tooltip');
+
+    function calculateHoverPercent(race, outcomeType) {
+        const outcomeCount = state.interviews.filter(d => d.race__ethnicity === race && d.interview_decision === outcomeType).length;
+        const totalOutcomeCount = outcomeType === 'DENIED' ? deniedTotal : grantedTotal;
+        return (outcomeCount / totalOutcomeCount) * 100;
+    }
+
+    svg.selectAll('.denied-slice, .granted-slice')
+    .on('mouseover', function(event, d) {
+        svg.selectAll('.denied-slice, .granted-slice')
+           .transition().duration(300)
+           .style('opacity', 0.5);
+
+        svg.selectAll(`.denied-slice.${d.data.race}, .granted-slice.${d.data.race}`)
+           .transition().duration(300)
+           .style('opacity', 1)
+           .style('stroke', 'white')
+           .style('stroke-width', '2px');
+
+        tooltip.transition().duration(300).style('opacity', 1);
+        const deniedPercent = calculateHoverPercent(d.data.race, 'DENIED');
+        const grantedPercent = calculateHoverPercent(d.data.race, 'GRANTED');
+        tooltip.html(`${d.data.race}<br>Denied: ${deniedPercent.toFixed(1)}%<br>Granted: ${grantedPercent.toFixed(1)}%`)
+               .style('left', (event.pageX + 10) + 'px')
+               .style('top', (event.pageY - 28) + 'px');
+    })
+    .on('mouseout', function() {
+        svg.selectAll('.denied-slice, .granted-slice')
+           .transition().duration(300)
+           .style('opacity', 1)
+           .style('stroke', 'none')
+           .style('stroke-width', '0px');
+
+
+        tooltip.transition().duration(300).style('opacity', 0);
+    });
+
+
+    
+
+
     draw();
 }
 
 function draw() {
+
+    document.querySelectorAll('section').forEach(section => {
+        gsap.timeline({
+            scrollTrigger: {
+                trigger: section,
+                start: "top 80%",
+                end: "bottom 20%",
+                scrub: true,
+                toggleActions: "play none none reverse",
+                markers: true
+            }
+        })
+        .fromTo(section, {opacity: 0}, {opacity: 1, ease: "none"})
+        .to(section, {opacity: 0, ease: "none"});
+    });
 
     // CREATE FIRST GSAP TIMELINE FOR SCROLL EFFECTS
     tl1 = gsap.timeline({
@@ -193,10 +401,16 @@ function draw() {
             end: "top top+=100%",
             markers: {startColor: "red", endColor: "red"},
             toggleActions: "play none none reverse",
-            onLeave: () => {
-                // Enable tlMoveDown when tlFlyOut leaves the viewport
-                tlFlyOut.scrollTrigger.enable();
-            }
+        },
+    });
+
+    tl2 = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section1",
+            start: "center center",
+            end: "top top+=100%",
+            
+            toggleActions: "play none none reverse",
         },
     });
     let countObj = { value: 0 };
@@ -204,38 +418,35 @@ function draw() {
     // ADD INITIAL BARS TO TIMELINE
     tl1
     .add('start')
-    .to(".bar1", {width: xScale(state.interviews.length) - m.right, duration: 8}, 'start')
+    .to(".bar1", {width: xScale(state.interviews.length) - m.right, duration: 5}, 'start')
     .to(countObj, {
         value: state.interviews.length,
-        duration: 8,
+        duration: 5,
         onStart: () => {
-            gsap.to(countText.node(), { attr: { opacity: 1 }, duration: 8 });
+            gsap.to(countText.node(), { attr: { opacity: 1 }, duration: 5 });
         },
         onUpdate: () => {
             countText.text(Math.round(countObj.value) + " interviews");
         }
-    }, 'start')
-    .to(".bar2", {opacity: 1, delay: 1, duration: .3}, ">")
-    .to(".bar2text", {opacity: 1, delay: 1, duration: .3}, ">")
-    .to(".bar3", {opacity: 1, y: yScale('IDs More Than Once'), duration: 2}, ">")
-    .to(".bar3text", {opacity: 1, duration: .3}, ">");
+    }, 'start');
+
+    tl2
+    .to(".bar2", {opacity: 1,y: yScale('Unique Persons'), duration: 1})
+    .to(".bar2text", {opacity: 1, duration: 1}, 0)
+    .to(".bar3", {opacity: 1, y: yScale('IDs More Than Once'), duration: 1}, 0)
+    .to(".bar3text", {opacity: 1, duration: .3}, 0);
     
     // Timeline for flying out rect1, rect3, and their texts
     const tlFlyOut = gsap.timeline({
         scrollTrigger: {
             trigger: "#section2",
             start: "top center",
+            end: "bottom+=100 center", 
             markers: {startColor: "blue", endColor: "blue"},
-            enabled: false,
-            end: "top+=500 center",
-            onLeave: () => {
-                // Enable tlMoveDown when tlFlyOut leaves the viewport
-                tlMoveDown.scrollTrigger.enable();
-            }
         }
     });
 
-    tlFlyOut.to(".bar1, .count-text, .bar2text, .bar3, .bar3text", {
+    tlFlyOut.to(".bar2, .count-text, .bar2text, .bar3, .bar3text", {
         y: -200, opacity: 0, duration: 0.5, stagger: 0.1
     });
 
@@ -244,58 +455,181 @@ function draw() {
         scrollTrigger: {
             trigger: "#section2",
             start: "top center",
-            end: "top+=900 bottom",
+            end: "bottom+=100 bottom",
             scrub: true,
-            markers: {startColor: "pink", endColor: "pink"},
-            enabled: false
+            markers: {startColor: "pink", endColor: "pink", fontWeight: "bold"},
+            // enabled: false
         }
     });
 
-    tlMoveDown.to(".bar2", {
-        y: "+=300",
+    tlMoveDown.to(".bar1", {
+        y: "50%",
         duration: 1,
         ease: "none"
     });
 
-    gsap.set(".raceBarsAxis", { x: "-100%" });
+    gsap.set(".outcomeBarsAxis", { x: "-100%" });
 
+
+        // ScrollTrigger for splitting rect1 into vertical bars
+        const barSplitTrigger = ScrollTrigger.create({
+            trigger: "#section2",
+            start: "center center",
+            end: "top+=600 bottom",
+            markers: {startColor: "black", endColor: "black"},
+            onEnter: () => {
+                gsap.to(".bar1", {
+                    height: (i) => height - m.bottom - outcomeyScale(state.outcomeData.get(outcomes[i]).length),
+                    x: (i) => outcomexScale(outcomes[i]),
+                    y: (i) => outcomeyScale(state.outcomeData.get(outcomes[i]).length) - m.bottom,
+                    width: outcomexScale.bandwidth(),
+                    fill: (i) => raceColors[i % raceColors.length],
+                    duration: 2,
+                    ease: "power1.inOut",
+                    stagger: 0.1
+                });
     
-    // ScrollTrigger for splitting rect2 into vertical bars
-    const barSplitTrigger = ScrollTrigger.create({
-        trigger: "#section3",
-        start: "top center",
-        end: "top+=600 bottom",
-        markers: {startColor: "black", endColor: "black"},
-        onEnter: () => {
-            gsap.to(".bar2", {
-                height: (i) => height - m.bottom - raceyScale(state.raceData.get(races[i]).length),
-                x: (i) => racexScale(races[i]),
-                y: (i) => raceyScale(state.raceData.get(races[i]).length) - m.bottom + additionalOffsetY,
-                width: racexScale.bandwidth(),
-                fill: (i) => raceColors[i % raceColors.length],
-                duration: 2,
-                ease: "power1.inOut",
-                stagger: 0.1
-            });
-
-            const axisYPosition = d3.max(races, race => {
-                return raceyScale(state.raceData.get(race).length);
-            }) + additionalOffsetY+100;
-            
-            gsap.to(".raceBarsAxis", {
-                attr: { transform: `translate(${m.left}, ${axisYPosition})` },
-                opacity: 1,
-                delay: 2,
-                duration: 2,
-                ease: "power1.inOut"
-            });
-        },
-        onRefresh: self => {
-            if (window.scrollY < self.start) {
-                gsap.set(".raceBarsAxis", { opacity: 0 });
+                const axisYPosition = d3.max(outcomes, outcome => {
+                    return outcomeyScale(state.outcomeData.get(outcome).length);
+                });
+                
+                gsap.to(".outcomeBarsAxis", {
+                    attr: { transform: `translate(${m.left}, ${axisYPosition})` },
+                    opacity: 1,
+                    duration: 2,
+                    ease: "power1.inOut"
+                });
+            },
+            onRefresh: self => {
+                if (window.scrollY < self.start) {
+                    gsap.set(".outcomeBarsAxis", { opacity: 0 });
+                }
             }
+        });
+
+
+    const moveBarsTimeline = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section3",
+            start: "top center",
+            end: "bottom center",
+            scrub: true,
+            markers: true
         }
     });
 
+    moveBarsTimeline.to('.bar1:not(.DENIED):not(.GRANTED)', {
+        y: "-=300",
+        opacity: 0,
+        duration: .5,
+        ease: 'power1.inOut'
+    }, 0);
 
+    moveBarsTimeline.to('.outcomeBarsAxis', {
+        opacity: 0,
+        duration: .5,
+        ease: 'power1.inOut'
+    }, 0);
+
+    moveBarsTimeline.to('.bar1.DENIED', {
+        duration: .5,
+        y: deniedCenterY,
+        height: 0,
+        x: deniedCenterX - (outcomexScale.bandwidth() / 2),
+        opacity: 0, // Fade out
+        ease: 'power1.inOut'
+    }, 0);
+    
+    moveBarsTimeline.to('.bar1.GRANTED', {
+        duration: .5,
+        y: grantedCenterY,
+        height: 0,
+        x: grantedCenterX - (outcomexScale.bandwidth() / 2),
+        opacity: 0,
+        ease: 'power1.inOut'
+    }, 0);
+
+    moveBarsTimeline.to('.denied-circle', {
+        opacity: 1,
+        duration: .5,
+        attr: { r: circleRadius },
+        ease: 'power1.inOut'
+    }, 0);
+    
+    moveBarsTimeline.to('.granted-circle', {
+        opacity: 1,
+        duration: .5,
+        attr: { r: circleRadius },
+        ease: 'power1.inOut'
+    }, 0);
+    
+    moveBarsTimeline.to('.denied-circle', {
+        duration: 1,
+        attr: { 
+            cx: leftCenterX,
+            cy: svgCenterY, 
+            r: finalRadius 
+        },
+        ease: 'power1.inOut'
+    });
+    
+    moveBarsTimeline.to('.granted-circle', {
+        duration: 1,
+        attr: { 
+            cx: rightCenterX,
+            cy: svgCenterY, 
+            r: finalRadius 
+        },
+        ease: 'power1.inOut'
+    }, '<');
+
+    moveBarsTimeline.to('.bar1.DENIED, .bar1.GRANTED', {
+        duration: 1,
+        y: circleVerticalCenter, 
+        height: 0, 
+        opacity: 0,
+        ease: 'power1.inOut'
+    }, 0);
+
+    moveBarsTimeline.to('.circle-label', {
+        opacity: 1,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, ">");
+    
+
+    const pieTransitionTimeline = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section4",
+            start: "top center",
+            end: "bottom center",
+            scrub: true,
+            markers: true
+        }
+    });
+    
+    // Fade out the circles
+    pieTransitionTimeline.to('.denied-circle, .granted-circle', {
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.out'
+    });
+    
+    // Fade in the pie slices for 'DENIED'
+    pieTransitionTimeline.to('.denied-slice', {
+        opacity: 1,
+        stagger: 0.1,
+        duration: 1,
+        ease: 'power1.in'
+    }, '<');
+    
+    // Fade in the pie slices for 'GRANTED'
+    pieTransitionTimeline.to('.granted-slice', {
+        opacity: 1,
+        stagger: 0.1,
+        duration: 1,
+        ease: 'power1.in'
+    }, '<');
+    
+    
 };
