@@ -14,16 +14,26 @@ h2{
     text-align: center;
 }
 section{
-    margin-top: 50;
-    margin-bottom: 100;
+  margin-top: 50;
+  margin-bottom: 100;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  
 }
-
+.break{
+  width:auto;
+  height: 150px;
+}
 .outcomeBarsAxis .domain {
   stroke: none;
 }
 .content-container {
   display: flex;
   justify-content: space-between;
+  overflow-y: scroll;
+  height: 100vh;
+  scroll-snap-type: mandatory;
+  scroll-snap-type: y mandatory;
 }
 
 .text-sections {
