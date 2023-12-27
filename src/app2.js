@@ -10,6 +10,7 @@ const width = window.innerWidth * 0.7,
 let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races, deniedCircle, grantedCircle;
 let tl1, racexAxis, axisGroup, interviewTypeData, deniedTotal, grantedTotal;
 let leftCenterX, rightCenterX, typeCircles, typeColorScale, decColorScale;
+let over55, under55;
 const circleRadius = 50;
 const initialCircleRadius = 0;
 const finalRadius = 100;
@@ -38,6 +39,8 @@ function addBarCounts() {
             .attr('opacity', 0);
     });
 }
+
+
 
 /* APPLICATION STATE */
 let state = {
@@ -117,6 +120,11 @@ function init() {
 
     deniedTotal = state.interviews.filter(d => d.interview_decision === "DENIED").length;
     grantedTotal = state.interviews.filter(d=> d.interview_decision === "GRANTED").length;
+    blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
+    whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
+    reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
+    initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
+
 
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
     state.intTypeData = d3.group(state.interviews, d => d.parole_board_interview_type);
@@ -124,6 +132,12 @@ function init() {
     outcomes = Array.from(state.outcomeData.keys());
     races = Array.from(state.raceData.keys());
     intTypes = Array.from(state.intTypeData.keys());
+
+    over55 = state.interviews.filter(d=> d.age >= 55);
+    under55 = state.interviews.filter(d=>d.age < 55);
+
+    console.log("over",over55);
+    console.log("under", under55);
 
     //DATA FOR STACKING
     let formattedData = [];
@@ -351,7 +365,6 @@ function init() {
     deniedPieData.sort((a, b) => a.value - b.value);
     grantedPieData.sort((a, b) => a.value - b.value);
 
-
     const arc = d3.arc()
     .innerRadius(0)
     .outerRadius(finalRadius);
@@ -419,6 +432,91 @@ svg.selectAll('.pie-text-granted')
     .attr('dy', '0.35em')
     .text(d => calculatePercent(d.data.value, grantedTotal) + '%')
     .attr('opacity', 0);
+
+        //BUTTERFLY CHART
+    state.interviews.forEach(item => {
+        item.ageCategory = item.age >= 55 ? 'over55' : 'under55';
+    });
+
+    // Example function to calculate percentages
+function calculatePercentages(data, categoryKey, outcomeKey) {
+    const categoryCounts = d3.rollup(data, 
+                                     v => d3.rollup(v, leaves => leaves.length, d => d[outcomeKey]),
+                                     d => d[categoryKey]);
+
+    let formattedData = [];
+
+    categoryCounts.forEach((outcomes, category) => {
+        const total = Array.from(outcomes.values()).reduce((a, b) => a + b, 0);
+        const formattedEntry = { category };
+
+        outcomes.forEach((count, outcome) => {
+            formattedEntry[outcome] = (count / total) * 100;
+        });
+
+        formattedData.push(formattedEntry);
+    });
+
+    return formattedData;
+}
+
+// Call the function for each category you're interested in
+let butterflyRaceData = calculatePercentages(state.interviews, 'race__ethnicity', 'interview_decision');
+let butterflyAgeData = calculatePercentages(state.interviews, 'ageCategory', 'interview_decision'); // Assuming 'age' is a key
+let butterflyInterviewTypeData = calculatePercentages(state.interviews, 'parole_board_interview_type', 'interview_decision');
+
+
+let combinedData = [...butterflyRaceData, ...butterflyAgeData, ...butterflyInterviewTypeData];
+
+const requiredCategories = ["BLACK", "WHITE", "REAPPEAR", "INITIAL", "over55", "under55"];
+
+let filteredData = combinedData.filter(d => requiredCategories.includes(d.category));
+
+// Create the scales
+const butterflyyScale = d3.scaleBand()
+    .domain(requiredCategories)
+    .range([m.top, height - m.bottom])
+    .padding(0.1);
+
+const butterflyxScaleLeft = d3.scaleLinear()
+    .domain([0, 100])
+    .range([width / 2, m.left]);
+
+const butterflyxScaleRight = d3.scaleLinear()
+    .domain([0, 100])
+    .range([width / 2, width - m.right]);
+
+// Drawing Bars
+filteredData.forEach(d => {
+    // Drawing Denied Bars (Left side)
+    if (d.DENIED) {
+        svg.append("rect")
+            .attr("class", "but-bar-denied")
+            .attr("x", butterflyxScaleLeft(d.DENIED))
+            .attr("y", butterflyyScale(d.category))
+            .attr("width", width / 2 - butterflyxScaleLeft(d.DENIED))
+            .attr("height", butterflyyScale.bandwidth())
+            .attr("fill", "red");
+    }
+
+    // Drawing Granted Bars (Right side)
+    if (d.GRANTED) {
+        svg.append("rect")
+            .attr("class", "but-bar-granted")
+            .attr("x", width / 2)
+            .attr("y", butterflyyScale(d.category))
+            .attr("width", butterflyxScaleRight(d.GRANTED) - width / 2)
+            .attr("height", butterflyyScale.bandwidth())
+            .attr("fill", "green");
+    }
+});
+
+// Adding Y-axis in the middle
+svg.append("g")
+    .attr("transform", `translate(${width / 2}, 0)`)
+    .call(d3.axisLeft(butterflyyScale).tickSize(0))
+    .select(".domain").remove();
+
 
 
     // const tooltip = d3.select('#tooltip');
@@ -833,8 +931,43 @@ function draw() {
         opacity: 1,
         duration: 1,
         ease: 'power1.inOut'
+    }, 0)
+    .to('.pie-text-granted.WHITE, .pie-text-denied.WHITE', {
+        opacity: .2,
+        duration: 1,
+        ease: 'power1.inOut'
     }, 0);
 
+    const newPieTimeline = gsap.timeline({
+        scrollTrigger: {
+        trigger: "#section7",
+        start: "top center",
+        end: "center center",
+        scrub: 1
+        }
+    });
+
+    newPieTimeline
+    .to('.denied-circle, .granted-circle', {
+        opacity: 1,
+        duration: 2,
+        ease: 'power1.out'
+    }, 0)
+   .to('.denied-slice, .granted-slice', {
+        opacity: 0,
+        duration: 2,
+        ease: 'power1.in'
+    },0)
+    .to('.pie-text-denied.BLACK, .pie-text-granted.BLACK', {
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, 0)
+    .to('.pie-text-granted.WHITE, .pie-text-denied.WHITE', {
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, 0);
 
 
 
