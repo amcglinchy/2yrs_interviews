@@ -8,8 +8,9 @@ const width = window.innerWidth * 0.7,
     height = window.innerHeight * 0.8,
     m = { top: 20, bottom: 80, left: 20, right: 20 };
 let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races, deniedCircle, grantedCircle;
-let tl1, racexAxis, axisGroup, interviewTypeData, deniedTotal, grantedTotal;
-let leftCenterX, rightCenterX, typeCircles, typeColorScale, decColorScale;
+let tl1, racexAxis, axisGroup, interviewTypeData, deniedTotal, grantedTotal, butterflyAxis, butterflyyScale;
+let leftCenterX, rightCenterX, typeCircles, typeColorScale, decColorScale, butterflyxScaleLeft, butterflyxScaleRight;
+let butterflyxAxisLeft, butterflyxAxisRight;
 let over55, under55;
 const circleRadius = 50;
 const initialCircleRadius = 0;
@@ -27,14 +28,13 @@ function arePieChartsInteractive() {
 
 function addBarCounts() {
     outcomes.forEach((outcome, i) => {
-        const barHeight = height - m.bottom - outcomeyScale(state.outcomeData.get(outcome).length);
         const barYPosition = outcomeyScale(state.outcomeData.get(outcome).length)-m.bottom;
 
         svg.append('text')
             .attr('class', `bar-count ${outcome.replace(/\s+/g, '-')}`)
-            .attr('x', outcomexScale(outcome) + outcomexScale.bandwidth() / 2)
-            .attr('y', barYPosition - 5)
-            .attr('text-anchor', 'middle')
+            .attr('x', outcomexScale(outcome) + (outcomexScale.bandwidth()/2) +20)
+            .attr('y', barYPosition)
+            .attr('text-anchor', 'start')
             .text(state.outcomeData.get(outcome).length)
             .attr('opacity', 0);
     });
@@ -136,9 +136,6 @@ function init() {
     over55 = state.interviews.filter(d=> d.age >= 55);
     under55 = state.interviews.filter(d=>d.age < 55);
 
-    console.log("over",over55);
-    console.log("under", under55);
-
     //DATA FOR STACKING
     let formattedData = [];
     state.outcomeData.forEach((values, outcome) => {
@@ -206,7 +203,7 @@ function init() {
     outcomexAxis = d3.axisBottom(outcomexScale)
         .tickFormat((d, i) => outcomes[i])
         .tickSize(0)
-        .tickPadding(10); 
+        .tickPadding(1); 
 
     grantedCenterX = outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2;
     deniedCenterX = outcomexScale('DENIED') + outcomexScale.bandwidth() / 2;
@@ -243,19 +240,16 @@ function init() {
     // .attr("fill", "#1169e4");
 
 
-    let bar1Group = svg.append("g");
-
-    bar1Group.selectAll("rect")
-        .data(stackedData)
-        .enter().append("rect")
-            .attr("class", d => `bar1-${d.key.replace(/\s+/g, '')}`) 
-            .attr("x", d => xScale(d[0][0])) 
-            .attr("y", yScale('Total Interviews'))
-            // .attr("width", d => xScale(d[0][1]) - xScale(d[0][0])) 
-            .attr("width", 0)
-            .attr("height", yScale.bandwidth())
-            .attr("fill", "#1169e4");
-    
+    bar1Group = svg.selectAll(".bar1")
+    .data(stackedData)
+    .enter().append("rect")
+        .attr("class", d => `bar1-${d.key.replace(/\s+/g, '-')}`) 
+        .attr("x", d => xScale(d[0][0])) 
+        .attr("y", yScale('Total Interviews'))
+        // .attr("width", d => xScale(d[0][1]) - xScale(d[0][0])) 
+        .attr("width", 0)
+        .attr("height", yScale.bandwidth())
+        .attr("fill", "#1169e4");
 
     rect2 = svg
     .selectAll(".bar2")
@@ -310,18 +304,16 @@ function init() {
     .attr("class", "bar3text")
     .attr("opacity", "0");
 
-
     axisGroup = svg.append("g")
     .attr("class", "outcomeBarsAxis")
     .attr("opacity", "0")
     .call(outcomexAxis)
     .selectAll(".tick text")
-    .attr("transform", `translate(${outcomexScale.bandwidth() / 2}, 0)`)
+    .attr("transform", d => `translate(${(outcomexScale.bandwidth()/2)-20}, 0) rotate(-65)`)
     .style("text-anchor", "end")
     .style("font-size", "14px")
     .attr("dx", "-.8em")
-    .attr("dy", ".15em")
-    .attr("transform", "rotate(-65)");
+    .attr("dy", ".15em");
 
     // Create circles for "DENIED" and "GRANTED"
     deniedCircle = svg.append("circle")
@@ -438,84 +430,165 @@ svg.selectAll('.pie-text-granted')
         item.ageCategory = item.age >= 55 ? 'over55' : 'under55';
     });
 
-    // Example function to calculate percentages
-function calculatePercentages(data, categoryKey, outcomeKey) {
+//     // Example function to calculate percentages
+// function calculatePercentages(data, categoryKey, outcomeKey) {
+//     const categoryCounts = d3.rollup(data, 
+//                                      v => d3.rollup(v, leaves => leaves.length, d => d[outcomeKey]),
+//                                      d => d[categoryKey]);
+
+//     let formattedData = [];
+
+//     categoryCounts.forEach((outcomes, category) => {
+//         const total = Array.from(outcomes.values()).reduce((a, b) => a + b, 0);
+//         const formattedEntry = { category };
+
+//         outcomes.forEach((count, outcome) => {
+//             formattedEntry[outcome] = (count / total) * 100;
+//         });
+
+//         formattedData.push(formattedEntry);
+//     });
+
+//     return formattedData;
+// }
+
+// // Call the function for each category you're interested in
+// let butterflyRaceData = calculatePercentages(state.interviews, 'race__ethnicity', 'interview_decision');
+// let butterflyAgeData = calculatePercentages(state.interviews, 'ageCategory', 'interview_decision'); // Assuming 'age' is a key
+// let butterflyInterviewTypeData = calculatePercentages(state.interviews, 'parole_board_interview_type', 'interview_decision');
+
+
+// function updatePercentagesForTotal(data) {
+//     data.forEach(d => {
+//         d.percentOfDenied = deniedTotal ? (d.DENIED / deniedTotal) * 100 : 0;
+//         d.percentOfGranted = grantedTotal ? (d.GRANTED / grantedTotal) * 100 : 0;
+//     });
+// }
+
+function calculateCombinedPercentages(data, categoryKey, outcomeKey) {
+    let totalDenied = data.filter(d => d[outcomeKey] === "DENIED").length;
+    let totalGranted = data.filter(d => d[outcomeKey] === "GRANTED").length;
+
     const categoryCounts = d3.rollup(data, 
-                                     v => d3.rollup(v, leaves => leaves.length, d => d[outcomeKey]),
-                                     d => d[categoryKey]);
+        v => d3.rollup(v, leaves => leaves.length, d => d[outcomeKey]),
+        d => d[categoryKey]);
 
     let formattedData = [];
 
     categoryCounts.forEach((outcomes, category) => {
-        const total = Array.from(outcomes.values()).reduce((a, b) => a + b, 0);
-        const formattedEntry = { category };
+        const totalCategory = Array.from(outcomes.values()).reduce((a, b) => a + b, 0);
+        const deniedCount = outcomes.get("DENIED") || 0;
+        const grantedCount = outcomes.get("GRANTED") || 0;
 
-        outcomes.forEach((count, outcome) => {
-            formattedEntry[outcome] = (count / total) * 100;
-        });
-
-        formattedData.push(formattedEntry);
+        let entry = {
+            category,
+            percentOfCategoryDenied: (deniedCount / totalCategory) * 100,
+            percentOfCategoryGranted: (grantedCount / totalCategory) * 100,
+            percentOfTotalDenied: (deniedCount / totalDenied) * 100,
+            percentOfTotalGranted: (grantedCount / totalGranted) * 100
+        };
+        formattedData.push(entry);
     });
 
     return formattedData;
 }
 
-// Call the function for each category you're interested in
-let butterflyRaceData = calculatePercentages(state.interviews, 'race__ethnicity', 'interview_decision');
-let butterflyAgeData = calculatePercentages(state.interviews, 'ageCategory', 'interview_decision'); // Assuming 'age' is a key
-let butterflyInterviewTypeData = calculatePercentages(state.interviews, 'parole_board_interview_type', 'interview_decision');
-
-
-let combinedData = [...butterflyRaceData, ...butterflyAgeData, ...butterflyInterviewTypeData];
-
-const requiredCategories = ["BLACK", "WHITE", "REAPPEAR", "INITIAL", "over55", "under55"];
-
+let combinedRaceData = calculateCombinedPercentages(state.interviews, 'race__ethnicity', 'interview_decision');
+let combinedAgeData = calculateCombinedPercentages(state.interviews, 'ageCategory', 'interview_decision');
+let combinedInterviewTypeData = calculateCombinedPercentages(state.interviews, 'parole_board_interview_type', 'interview_decision');
+let combinedData = [...combinedRaceData, ...combinedAgeData, ...combinedInterviewTypeData];
+let requiredCategories = ["BLACK", "WHITE", "REAPPEAR", "INITIAL", "over55", "under55"];
 let filteredData = combinedData.filter(d => requiredCategories.includes(d.category));
 
+console.log(filteredData)
+
 // Create the scales
-const butterflyyScale = d3.scaleBand()
+butterflyyScale = d3.scaleBand()
     .domain(requiredCategories)
     .range([m.top, height - m.bottom])
     .padding(0.1);
 
-const butterflyxScaleLeft = d3.scaleLinear()
+butterflyxScaleLeft = d3.scaleLinear()
     .domain([0, 100])
     .range([width / 2, m.left]);
 
-const butterflyxScaleRight = d3.scaleLinear()
+butterflyxScaleRight = d3.scaleLinear()
     .domain([0, 100])
     .range([width / 2, width - m.right]);
 
 // Drawing Bars
 filteredData.forEach(d => {
     // Drawing Denied Bars (Left side)
-    if (d.DENIED) {
-        svg.append("rect")
-            .attr("class", "but-bar-denied")
-            .attr("x", butterflyxScaleLeft(d.DENIED))
-            .attr("y", butterflyyScale(d.category))
-            .attr("width", width / 2 - butterflyxScaleLeft(d.DENIED))
-            .attr("height", butterflyyScale.bandwidth())
-            .attr("fill", "red");
-    }
+    svg.append("rect")
+        .attr("class", "but-bar-cat-denied")
+        .attr("x", butterflyxScaleLeft(d.percentOfCategoryDenied)) // Use percentOfCategoryDenied
+        .attr("y", butterflyyScale(d.category))
+        .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryDenied)) // Adjust width calculation
+        .attr("height", butterflyyScale.bandwidth())
+        .attr("fill", "red")
+        .attr("opacity", 0); 
 
     // Drawing Granted Bars (Right side)
-    if (d.GRANTED) {
-        svg.append("rect")
-            .attr("class", "but-bar-granted")
-            .attr("x", width / 2)
-            .attr("y", butterflyyScale(d.category))
-            .attr("width", butterflyxScaleRight(d.GRANTED) - width / 2)
-            .attr("height", butterflyyScale.bandwidth())
-            .attr("fill", "green");
-    }
+    svg.append("rect")
+        .attr("class", "but-bar-cat-granted")
+        .attr("x", width / 2)
+        .attr("y", butterflyyScale(d.category))
+        .attr("width", butterflyxScaleRight(d.percentOfCategoryGranted) - width / 2) // Use percentOfCategoryGranted
+        .attr("height", butterflyyScale.bandwidth())
+        .attr("fill", "green")
+        .attr("opacity", 0); // Change opacity as needed
 });
 
+filteredData.forEach(d => {
+    // Drawing Denied Bars (Left side)
+    svg.append("rect")
+        .attr("class", "but-bar-tot-denied")
+        .attr("x", butterflyxScaleLeft(d.percentOfTotalDenied)) // Use percentOfCategoryDenied
+        .attr("y", butterflyyScale(d.category))
+        .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfTotalDenied)) // Adjust width calculation
+        .attr("height", butterflyyScale.bandwidth())
+        .attr("fill", "red")
+        .attr("fill-opacity", .2)
+        .attr("stroke", "black")
+        .attr("opacity", 0); 
+
+    // Drawing Granted Bars (Right side)
+    svg.append("rect")
+        .attr("class", "but-bar-tot-granted")
+        .attr("x", width / 2)
+        .attr("y", butterflyyScale(d.category))
+        .attr("width", butterflyxScaleRight(d.percentOfTotalGranted) - width / 2) // Use percentOfCategoryGranted
+        .attr("height", butterflyyScale.bandwidth())
+        .attr("fill", "green")
+        .attr("fill-opacity", .2)
+        .attr("stroke", "black")
+        .attr("opacity", 0); // Change opacity as needed
+});
+
+
 // Adding Y-axis in the middle
-svg.append("g")
+butterflyyAxis = svg.append("g")
     .attr("transform", `translate(${width / 2}, 0)`)
+    .attr("class", "butterflyyAxis")
     .call(d3.axisLeft(butterflyyScale).tickSize(0))
+    .attr("opacity", 0)
     .select(".domain").remove();
+
+butterflyxAxisLeft = svg.append("g")
+    .attr("transform", `translate(0, ${height - m.bottom})`)
+    .attr("class", "butterflyxAxisLeft")
+    .call(d3.axisBottom(butterflyxScaleLeft).ticks(4)) // Adjust number of ticks as needed
+    .attr("opacity", 0)
+    .select(".domain").remove();
+
+
+butterflyxAxisRight = svg.append("g")
+    .attr("transform", `translate(0, ${height - m.bottom})`)
+    .attr("class", "butterflyxAxisRight")
+    .call(d3.axisBottom(butterflyxScaleRight).ticks(4)) // Adjust number of ticks as needed
+    .attr("opacity", 0)
+    .select(".domain").remove();
+
 
 
 
@@ -605,7 +678,7 @@ function draw() {
     outcomes.forEach((outcome, i) => {
         const segmentWidth = xScale(state.outcomeData.get(outcome).length) - m.right;
     
-        tl1.to(`.bar1-${outcome.replace(/\s+/g, '')}`, {
+        tl1.to(`.bar1-${outcome.replace(/\s+/g, '-')}`, {
             width: segmentWidth,
             duration: 1.5,
             ease: "none",
@@ -669,20 +742,22 @@ function draw() {
 
     // Add animations to the timeline
     outcomes.forEach((outcome, i) => {
-        verticalBarTimeline.to(`.bar1-${outcome.replace(/\s+/g, '')}`, {
+        verticalBarTimeline.to(`.bar1-${outcome.replace(/\s+/g, '-')}`, {
             height: height - m.bottom - outcomeyScale(state.outcomeData.get(outcome).length),
             y: outcomeyScale(state.outcomeData.get(outcome).length) - m.bottom,
-            x: outcomexScale(outcome),
-            width: outcomexScale.bandwidth(),
+            attr: {x: outcomexScale(outcome)+outcomexScale.bandwidth()/2},
+            width: outcomexScale.bandwidth()/2,
             fill: barColors[i % barColors.length],
             duration: 2,
             ease: "power1.inOut",
         }, "<");
     });
 
+    
+
     const axisYPosition = d3.max(outcomes, outcome => outcomeyScale(state.outcomeData.get(outcome).length));
     verticalBarTimeline.to(".outcomeBarsAxis", {
-        attr: { transform: `translate(${m.left}, ${axisYPosition})` },
+        attr: { transform: `translate(0, ${axisYPosition})` },
         opacity: 1,
         duration: 2,
         ease: "power1.inOut",
@@ -968,6 +1043,60 @@ function draw() {
         duration: 1,
         ease: 'power1.inOut'
     }, 0);
+
+    const butterflyTimeline1 = gsap.timeline({
+        scrollTrigger: {
+        trigger: "#section8",
+        start: "top center",
+        end: "center center",
+        scrub: 1
+        }
+    });
+
+    butterflyTimeline1
+    .to('.denied-circle, .granted-circle, .circle-label', {
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.out'
+    }, 0)
+    .to('.but-bar-cat-denied, .but-bar-cat-granted, .butterflyyAxis', {
+        opacity: 1,
+        duration: 1,
+        ease: "power1.inOut"
+    })
+    .to('.butterflyxAxisLeft',{
+        opacity: 1,
+        duration: 1,
+        ease: "power1.inOut"
+    })
+    .to('.butterflyxAxisRight',{
+        opacity: 1,
+        duration: 1,
+        ease: "power1.inOut"
+    });
+
+    const butterflyTimeline2 = gsap.timeline({
+        scrollTrigger: {
+        trigger: "#section9",
+        start: "top center",
+        end: "center center",
+        scrub: 1
+        }
+    });
+
+    butterflyTimeline2
+    // .to('.but-bar-cat-denied, .but-bar-cat-granted', {
+    //     opacity: 0,
+    //     duration: 1,
+    //     ease: "power1.inOut"
+    // })
+    .to('.but-bar-tot-denied, .but-bar-tot-granted', {
+        opacity: 1,
+        duration: 1,
+        ease: "power1.inOut"
+    })
+
+
 
 
 
