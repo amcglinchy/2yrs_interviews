@@ -10,57 +10,193 @@
   </head>
   <body>
     <div>    
-      <h1>Two Years of Parole Interviews</h1>
-      <h2>The New York State Board of Parole is the sole entity with discretionary authority
-         to grant release to eligible individuals incarcerated with DOCCS. It is an independent
-          body responsible for determining parole, setting parole conditions, and revoking parole
-           when conditions have been violated.</h2>
+      <h1>
+        Making Sense of <br> Making Parole in <br> New York State
+      </h1>
+      <h2>
+        The New York State Board of Parole is the sole entity with discretionary authority
+        to grant release to eligible individuals incarcerated with DOCCS. It is an independent
+        body responsible for determining parole, setting parole conditions, and revoking parole
+        when conditions have been violated.
+      </h2>
       </div>
     <div>
       <h2>
-        Board interviews include answering questions about prior criminal activity, 
-        custodial record, program participation, future goals and release plans.
+        According to DOCCS interviews with the parole board "include answering questions about prior criminal activity, 
+        custodial record, program participation, future goals and release plans." <br>
+        Nowhere does it say that a certain answer or plan is the best to get you parole. <br>
+        What makes someone a better candidate for parole? <br>
+        Do factors such as age, race, crime, time served, facility and county of commitment
+        play a role in predicting parole interview outcomes?<br>
+        With this project, I set out to find trends in parole outcomes using only publicly available
+        data about parole interviews between September 2021 to September 2023.
       </h2>
     </div>
 
     <div class="content-container">
-      <div id="tooltip" class="tooltip" style="opacity:0;"></div>
+      <div id="tooltip" class="tooltip"></div>
       <div class="text-sections">
         <section id="section0">
 
         </section>
-          <section id="section1">
-              <p>Bewteen September 2021 and September 2023 the Board of Parole of New York State
-                interviewed incarcerated persons eligible for parole.</p>
-          </section>
+        <!-- <section id="section1">
+          <p>Over these two years, the Board of Parole of New York State
+             conducted <span id="dynamicCount"><span class="count-number">0</span></span> interviews with persons eligible for parole.
+          </p>
+        </section>
+        <section id="section1_1">
+            <p>
+              There were a total of 9,077 individuals interviewed.
+            </p>            
+        </section>
+        <section id="section1_2">
+          <p>And 2,760 of those individuals were interveiwed more than once.
+        </section> -->
+
+        <section id="section1">
+          <p id="section1_1" >Over these two years, the Board of Parole of New York State
+             conducted <span id="dynamicCount"><span class="count-number">0</span></span> interviews with persons eligible for parole.
+          </p>
+          <p id="section1_2" class="additional-text">
+              There were a total of <b>9,077</b> individuals interviewed.
+            </p>            
+          <p id="section1_3" class="additional-text">
+            <b>2,760</b> of those individuals were interviewed more than once.
+          </p>
+        </section>
+
           <section id="section2">
-              <p>This is section 2.
-                Within a few weeks, a decision is made on whether or not the person is granted parole.
-                Need to add count at the top, or percentage?
-                What does other include?
-                Or Earlier / Postponement
+              <p>Taking a look at the outcomes
+                <br>
+                of these interviews, approximately
+                <br>
+                <b>47%</b> were <b>denied</b> parole,
+                <br>
+                <b>34%</b> were <b>granted</b> parole.
+              </p>
+              <p>
+                The remaining interviews were either postponed, or not yet
+                given a decision / given a decision of "other".
+              </p>
           </section>
+
           <section id="section3">
-              <p>This is section 3.
-                Let's take a closer look at the denied and granted.
+                <p>
+                  For our purposes, we're going to focus on the interviews with decisions of either denied or granted.
+                </p>
+                <p>We'll look at variables of interest such as race, age, gender, interview type and how they relate to denied and granted interview decisions.</p>
           </section>
           <section id="section4">
-            <p>This is section 4. The breakdown of race of the two categories. Need to add some numbers?
+            <p>
+              First, let's check out the makeup of these groups by race/ethnicity.
+            </p>
+            <p>
+              Scroll over the pie slices to explore.
+            </p>
           </section>
           <section id="section5">
-            <p>This is section 5. White people.
+            <p>
+              White people make up
+              <br> 
+              <b>40.7%</b> of the <b>granted</b> interviews and
+              <br>
+              <b>30.6%</b> of the <b>denied</b> interviews.
+            </p>
           </section>
           <section id="section6">
-            <p>This is section 6. Black people.
+            <p>
+              Black people make up
+              <br> 
+              <b>37.9%</b> of the <b>granted</b> interviews and
+              <br>
+              <b>45.6%</b> of the <b>denied</b> interviews.
+            </p>
+            <p>
+              Here we see that <b>15%</b> more interviews of black people were denied than interviews of white people.
+            </p>
+            <p>
+              This seems to be a significant difference, but this could be due to more total interviews of black people.
+            </p>
           </section>
           <section id="section7">
-            <p>This is section 7. Something about collecting interview data from September 2021 to September 2023, from the DOCCS lookup calendar.
+            <p>
+              Here we see the proportions of granted and denied interviews for each race, in relation to their overall 
+              representation in the total interviews. 
+            </p>
+            <p>
+              Effectively showing the rate at which each racial group is either denied or granted parole.
+            </p>
+            <p>
+              Scroll over the bars to explore.
+            </p>
           </section>
           <section id="section8">
-            <p>This is section 8. Something about collecting interview data from September 2021 to September 2023, from the DOCCS lookup calendar.
+            <p>
+              Interviews of black people are 
+              <br>
+              <b>64.3%</b> more frequently denied than granted parole and
+              <br>
+              <b>19.6%</b> more frequently denied parole than interviews of white people.
+            </p>
+            <p>
+              Interviews of white people are 
+              <br>
+              <b>2.4%</b> more frequently denied than granted parole and
+              <br>
+              <b>34.1%</b> more frequently granted parole than interviews of black people.
+            </p>
           </section>
           <section id="section9">
-            <p>This is section 9. Something about collecting interview data from September 2021 to September 2023, from the DOCCS lookup calendar.
+            <p>
+              Now let's check out the makeup of these groups by age.
+            </p>
+            <p>
+              Scroll over the pie slices to explore.
+            </p>
+          </section>
+          <section id="section10">
+            <p>
+              Here we see the proportions of granted and denied interviews for each age group, in relation to their overall 
+              representation in the total interviews. 
+            </p>
+            <p>
+              Effectively showing the rate at which each age group is either denied or granted parole.
+            </p>
+            <p>
+              Scroll over the bars to explore.
+            </p>
+          </section>
+          <section id="section11">
+            <p>
+              Interviews of individuals aged 55 and over are 
+              <br>
+              <b>23.1%</b> more frequently denied than granted parole.
+            </p>
+            <p>
+              Interviews of individuals aged 45-54 are 
+              <br>
+              <b>13.2%</b> more frequently denied than granted parole.
+            </p>
+            <p>
+              When comparing parole decision outcomes between different age groups:
+            </p>
+            <p>
+              Individuals aged 55 and over are <b>1.3%</b> more frequently denied parole compared to those aged 45-54.
+            </p>
+            <p>
+              Conversely, individuals aged 45-54 are <b>2.1%</b> more frequently granted parole compared to those aged 55 and over.
+            </p>
+            
+
+          </section>
+          <section id="section12">
+
+          </section>
+          <section id="section13">
+
+          </section>
+          <section id="section14">
+
           </section>
       </div>
       <div id="container" class="svg-container">

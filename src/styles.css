@@ -6,20 +6,30 @@ body{
 }
 
 h1 {
-    text-align: center;
+    text-align: left;
     margin-top: 2.5em;
+    margin-left: 2.5em;
     font-size: 5em;
 }
 h2{
-    text-align: center;
+    text-align: left;
+    margin-left: 2.5em;
 }
-section{
-  margin-top: 50;
-  margin-bottom: 100;
+
+section {
+  margin-top: 50px; /* Added px for units */
+  margin-bottom: 100px; /* Added px for units */
   scroll-snap-align: center;
   scroll-snap-stop: always;
-  
+  min-height: 100vh; 
+  display: flex;
+  flex-direction: column; /* This makes child elements stack vertically */
+  align-items: left; /* Centers items horizontally */
+  justify-content: center; /* Centers items vertically */
+  padding: 20px; 
+  transition: opacity 0.3s ease-in-out; 
 }
+
 .break{
   width:auto;
   height: 150px;
@@ -27,10 +37,26 @@ section{
 .outcomeBarsAxis .domain {
   stroke: none;
 }
+
+.ageButterflyyAxis .domain {
+  stroke: none;
+}
+.raceButterflyyAxis .domain {
+  stroke: none;
+}
+
+.butterflyxAxisLeft .domain {
+  stroke: none;
+}
+.butterflyxAxisRight .domain {
+  stroke: none;
+}
+
 .content-container {
   display: flex;
   justify-content: space-between;
   overflow-y: scroll;
+  /* overflow-y: hidden !important; */
   height: 100vh;
   scroll-snap-type: mandatory;
   scroll-snap-type: y mandatory;
@@ -53,7 +79,8 @@ section{
 
 svg {
   width: 70%; 
-  height: auto; 
+  height: auto;
+  shape-rendering: crispEdges;
 }
 
 #container svg {
@@ -63,17 +90,8 @@ svg {
 
 section p {
   opacity: 1; 
-  transition: opacity 0.3s ease-in-out; 
-}
-
-section {
-  min-height: 100vh; 
-  display: flex;
-  align-items: center; 
-  justify-content: center; 
-  opacity: 0; 
-  padding: 50px; 
-  transition: opacity 0.3s ease-in-out; 
+  margin-bottom: 20px; /* Adjust as needed for spacing */
+  /* transition: opacity 0.3s ease-in-out;  */
 }
 
 .tooltip {
@@ -81,11 +99,34 @@ section {
   text-align: center;
   width: auto;
   padding: 10px;
-  background: white;
+  /* background-color: rgba(255, 255, 255, 0.5); */
+  background-color: #fffafa;
   border: 1px solid #000;
   border-radius: 5px;
   pointer-events: none;
-  opacity: 0;
   transition: opacity 0.3s;
   z-index: 1000;
+  display: none;
+  font-size: 14;
 }
+.count-number {
+  font-weight: bold;
+}
+.additional-text {
+  opacity: 0;
+  /* transition: opacity 1s ease-in-out; */
+}
+/* .denied-highlight{
+  background-color: #BCD979;
+  padding: 1px;
+}
+.granted-highlight{
+  background-color: #3A5683;
+  color: white;
+  padding: 1px;
+} */
+
+.no-tooltip {
+  pointer-events: none; /* Prevents mouse events on the element */
+}
+
