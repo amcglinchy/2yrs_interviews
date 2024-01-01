@@ -6,7 +6,7 @@
     "build": "parcel build"
   },
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.html",
   "repository": "https://github.com/amcglinchy/2yrs_interviews.git",
   "author": "Alexandra <asmcglinchy@gmail.com>",
   "license": "MIT",
