@@ -5,6 +5,10 @@ body{
   background-color: #fffafa;
 }
 
+.small-text{
+  font-size: 10px
+}
+
 h1 {
     text-align: left;
     margin-top: 2.5em;
@@ -17,15 +21,15 @@ h2{
 }
 
 section {
-  margin-top: 50px; /* Added px for units */
-  margin-bottom: 100px; /* Added px for units */
+  margin-top: 50px;
+  margin-bottom: 100px;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   min-height: 100vh; 
   display: flex;
-  flex-direction: column; /* This makes child elements stack vertically */
-  align-items: left; /* Centers items horizontally */
-  justify-content: center; /* Centers items vertically */
+  flex-direction: column;
+  align-items: left; 
+  justify-content: center; 
   padding: 20px; 
   transition: opacity 0.3s ease-in-out; 
 }
@@ -38,10 +42,14 @@ section {
   stroke: none;
 }
 
-.ageButterflyyAxis .domain {
+.butterfly-y-axis .domain {
   stroke: none;
 }
-.raceButterflyyAxis .domain {
+
+.raceButterflyyAxis .domain{
+  stroke: none;
+}
+.ageButterflyyAxis .domain{
   stroke: none;
 }
 
@@ -49,6 +57,12 @@ section {
   stroke: none;
 }
 .butterflyxAxisRight .domain {
+  stroke: none;
+}
+.x-axis .domain{
+  stroke: none;
+}
+.y-axis .domain{
   stroke: none;
 }
 
@@ -61,6 +75,8 @@ section {
   scroll-snap-type: mandatory;
   scroll-snap-type: y mandatory;
 }
+
+
 
 .text-sections {
   width: 30%; 
@@ -90,8 +106,7 @@ svg {
 
 section p {
   opacity: 1; 
-  margin-bottom: 20px; /* Adjust as needed for spacing */
-  /* transition: opacity 0.3s ease-in-out;  */
+  margin-bottom: 20px; 
 }
 
 .tooltip {
@@ -114,19 +129,45 @@ section p {
 }
 .additional-text {
   opacity: 0;
-  /* transition: opacity 1s ease-in-out; */
 }
-/* .denied-highlight{
-  background-color: #BCD979;
-  padding: 1px;
-}
-.granted-highlight{
-  background-color: #3A5683;
-  color: white;
-  padding: 1px;
-} */
+
 
 .no-tooltip {
-  pointer-events: none; /* Prevents mouse events on the element */
+  pointer-events: none; 
 }
 
+/* CSS */
+.button-38 {
+  background-color: #FFFFFF;
+  border: 0;
+  border-radius: .5rem;
+  box-sizing: content-box;
+  width: 40%;
+  color: #111827;
+  font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  padding: .75rem 1rem;
+  text-align: center;
+  text-decoration: none #D1D5DB solid;
+  text-decoration-thickness: auto;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button-38:hover {
+  background-color: rgb(249,250,251);
+}
+
+.button-38:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.button-38:focus-visible {
+  box-shadow: none;
+}

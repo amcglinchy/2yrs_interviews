@@ -6,7 +6,7 @@
     <title>2YRS</title>
     <link rel="stylesheet" href="styles.css" />
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> -->
-    <script type="module" src="app2.js"></script>
+    <script type="module" src="appsave.js"></script>
   </head>
   <body>
     <div>    
@@ -30,6 +30,9 @@
         play a role in predicting parole interview outcomes?<br>
         With this project, I set out to find trends in parole outcomes using only publicly available
         data about parole interviews between September 2021 to September 2023.
+      </h2>
+      <h2>
+        There are endless ways to explore, analyze and visualize this data.
       </h2>
     </div>
 
@@ -79,19 +82,18 @@
                 given a decision / given a decision of "other".
               </p>
           </section>
-
           <section id="section3">
                 <p>
                   For our purposes, we're going to focus on the interviews with decisions of either denied or granted.
                 </p>
-                <p>We'll look at variables of interest such as race, age, gender, interview type and how they relate to denied and granted interview decisions.</p>
+                <p>We'll look at variables of interest such as race, age, gender, interview type and how they relate to these interview decisions.</p>
           </section>
           <section id="section4">
             <p>
-              First, let's check out the makeup of these groups by race/ethnicity.
+              First, check out the makeup of these groups by race/ethnicity.
             </p>
             <p>
-              Scroll over the pie slices to explore.
+              Scroll over the pie charts to explore.
             </p>
           </section>
           <section id="section5">
@@ -112,94 +114,160 @@
               <b>45.6%</b> of the <b>denied</b> interviews.
             </p>
             <p>
-              Here we see that <b>15%</b> more interviews of black people were denied than interviews of white people.
+              <b>15%</b> more interviews of black people were denied than interviews of white people.
             </p>
             <p>
-              This seems to be a significant difference, but this could be due to more total interviews of black people.
+              Is this difference significant? Or could it be due to the fact that there were more interviews of black people than white people?
             </p>
           </section>
           <section id="section7">
             <p>
-              Here we see the proportions of granted and denied interviews for each race, in relation to their overall 
-              representation in the total interviews. 
+              To account for one group being represented more in the data, in this chart each bar represents 100%<sup>*</sup> of that group.
             </p>
             <p>
-              Effectively showing the rate at which each racial group is either denied or granted parole.
+              This shows the rate at which each racial group is either denied or granted parole.
             </p>
             <p>
               Scroll over the bars to explore.
+            </p>
+            <p class = "small-text">
+              <sup>*</sup>These bars do not actually equal 100% of the total group's population. Interviews that received a postponement or other decision are not represented here. 
             </p>
           </section>
           <section id="section8">
             <p>
               Interviews of black people are 
               <br>
-              <b>64.3%</b> more frequently denied than granted parole and
+              <b>8.26%</b> more frequently denied than granted parole and
               <br>
               <b>19.6%</b> more frequently denied parole than interviews of white people.
             </p>
             <p>
               Interviews of white people are 
               <br>
-              <b>2.4%</b> more frequently denied than granted parole and
+              <b>1.05%</b> more frequently denied than granted parole and
               <br>
-              <b>34.1%</b> more frequently granted parole than interviews of black people.
+              <b>10.46%</b> more frequently granted parole than interviews of black people.
             </p>
           </section>
+          <!-- <section id="section81">
+
+
+          </section> -->
           <section id="section9">
             <p>
-              Now let's check out the makeup of these groups by age.
-            </p>
-            <p>
-              Scroll over the pie slices to explore.
-            </p>
-          </section>
-          <section id="section10">
-            <p>
-              Here we see the proportions of granted and denied interviews for each age group, in relation to their overall 
-              representation in the total interviews. 
-            </p>
-            <p>
-              Effectively showing the rate at which each age group is either denied or granted parole.
+              Here's the same chart displaying age groups.
             </p>
             <p>
               Scroll over the bars to explore.
             </p>
           </section>
+          <section id="section10">
+            <p>
+              Interviews of people under 25 are 
+              <br>
+              <b>32.91%</b> more frequently denied than granted parole and
+              <br>
+              <b>9.2%</b> more frequently denied parole than interviews of people aged 45-54.
+            </p>
+            <p>
+              Interviews of people aged 45-54 are 
+              <br>
+              <b>5.18%</b> more frequently denied than granted parole and
+              <br>
+              <b>18.5%</b> more frequently granted parole than interviews of people under 25.
+            </p>
+          </section>
           <section id="section11">
+            <!-- <p>
+              Here, I'd like to take a closer look at the group of people 55 and older.
+            </p> -->
             <p>
-              Interviews of individuals aged 55 and over are 
-              <br>
-              <b>23.1%</b> more frequently denied than granted parole.
+              Up til now, we've seen data to suggest a few things that, albeit interesting, aren't entirely surprising to me (given history of this country).
             </p>
             <p>
-              Interviews of individuals aged 45-54 are 
-              <br>
-              <b>13.2%</b> more frequently denied than granted parole.
+              First, we've seen that interviews with black people are more often denied than those of any other race.
+              And interveiws with white people are more often granted than those of any other race.
             </p>
             <p>
-              When comparing parole decision outcomes between different age groups:
+              We've also seen that parole grants tend to trend upwards with age.
             </p>
-            <p>
-              Individuals aged 55 and over are <b>1.3%</b> more frequently denied parole compared to those aged 45-54.
-            </p>
-            <p>
-              Conversely, individuals aged 45-54 are <b>2.1%</b> more frequently granted parole compared to those aged 55 and over.
-            </p>
-            
-
           </section>
           <section id="section12">
+            <p>
+              Let's look at something I found to be a little more surprising.
+            </p>
+            <p>
+              This density chart represents the estimated density of the data as related to the individual's
+              proportion of sentence served at the time of the interview.
+            </p>
 
           </section>
           <section id="section13">
-
+            <p>
+              If we are to assume that as one serves more of their sentence (the proportion of their sentence served increases),
+              they have a better chance of making parole, we would expect to see a normal distribution as shown with the red line.
+            </p>
           </section>
           <section id="section14">
+            <p>
+              The distribution seen here suggests that there's a sweet spot for being granted parole at around 25% of max sentence served
+              and a spike in denials of those who've served well over half of their maximum sentence.
+            </p>
+          </section>
+          <section id ="section15">
+            <p>
+              Here you can toggle between time served, age entered and age to see each variable's distribution for both the denied and granted groups.
+            </p>
+            <p>
+              The similarities between distributions of granted and denied for these variables suggests that they're not determining factors
+              in whether someone is granted or denied parole.
+            </p>
+            <button class = "button-38" id = "time_serv_at_int">TIME SERVED</button>
+            <button class = "button-38" id = "age_entered">AGE ENTERED</button>
+            <button class = "button-38" id = "age">AGE</button>
+
+          </section>
+          <section id ="section16">
+            <p>
+              Another variable we've yet to look at is the <b>type of interview</b>.
+            </p>
+            <p>
+              <b>INITIAL</b>: initial appearance, PIE hearings (parole immediately eligible), merit time hearings, early conditional parole for deportation hearings, medical hearings, and supplemental merit hearings.
+              <br>
+              <br>
+              <b>REAPPEAR</b>: Reappearances - release was previously denied.
+              <br>
+              <br>
+              <b>REAPP</b>: Parole violation hearings.
+              <br>
+              <br>
+              <b>RECISSION</b>: Hearings held after parole is granted but the parole board receives new information that prompts them to reconsider their decision.
+              <br>
+              <br>
+              <b>SP CONSDR</b>: Hearings held after successful appeal of parole denial.
+            </p>
+
+          </section>
+          <section id ="section17">
+
+          </section>
+          <section id ="section18">
+
+          </section>
+          <section id ="section19">
+
+          </section>
+          <section id ="section20">
 
           </section>
       </div>
       <div id="container" class="svg-container">
+        <!-- <button type="button" class="btn" id="prop_sent_served">prop</button>
+        <button type="button" class="btn" id="time_serv_at_int">time</button>
+        <button type="button" class="btn" id="age">age</button>
+        <button type="button" class="btn" id="age_entered">age entered</button> -->
+        <!-- <button type="button" class="btn" id="time_past_min">past min</button> -->
       </div>
   </body>
 </html>
