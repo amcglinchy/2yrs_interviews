@@ -13,27 +13,35 @@
       <h1>
         Making Sense of <br> Making Parole in <br> New York State
       </h1>
-      <h2>
-        The New York State Board of Parole is the sole entity with discretionary authority
-        to grant release to eligible individuals incarcerated with DOCCS. It is an independent
-        body responsible for determining parole, setting parole conditions, and revoking parole
-        when conditions have been violated.
-      </h2>
+      <h3>
+        by Alexandra McGlinchy
+      </h3>
+      <p class="intro">
+        The New York State Board of Parole holds the unique authority to decide on the release of
+         eligible individuals incarcerated under the Department of Corrections and Community 
+         Supervision (DOCCS). This independent entity is tasked with making decisions on parole, 
+         establishing the terms for parole, and revoking it if those terms are not adhered to.
+      </p>
       </div>
     <div>
-      <h2>
-        According to DOCCS interviews with the parole board "include answering questions about prior criminal activity, 
-        custodial record, program participation, future goals and release plans." <br>
-        Nowhere does it say that a certain answer or plan is the best to get you parole. <br>
-        What makes someone a better candidate for parole? <br>
-        Do factors such as age, race, crime, time served, facility and county of commitment
-        play a role in predicting parole interview outcomes?<br>
-        With this project, I set out to find trends in parole outcomes using only publicly available
-        data about parole interviews between September 2021 to September 2023.
-      </h2>
-      <h2>
-        There are endless ways to explore, analyze and visualize this data.
-      </h2>
+      <p class="intro">
+        According to DOCCS, parole board interviews may include questions about past criminal behavior, records during custody, participation in programs, future aspirations, and plans upon release. It's not specified which answers or plans are most likely to secure parole. 
+      </p>
+      <p class="intro">
+        So, what really influences a candidate's chances for parole? Are factors like age, race, the nature of the crime, time served, the facility, and the county of commitment significant in determining the outcomes of parole interviews?
+      </p>
+      <p class="intro">
+        With this project, I aim to uncover patterns in parole decisions using publicly available data on incarcerated individuals and their parole interviews from September 2021 to September 2023. This exploration seeks to provide insights into how the Board of Parole operates and what factors may tip the scales in thier decision-making process.
+      </p>
+      <p class="intro">
+        A key point to note: This analysis is based solely on quantifiable, publicly accessible data. It doesn't include private criminal records, detailed explanations of parole board decisions, or other immeasurable factors like the specifics of the crime, political context, the individual's demeanor during the hearing, their perceived remorse, the robustness of their release plan, or the level of community support or opposition. Therefore, while this analysis provides valuable insights, it is important to recognize that it represents only a partial view, limited to the measurable aspects of the parole interview process.
+      </p>
+      <p class="intro">
+        I've found that there are endless ways to explore, analyze, and visualize this data. This reality is both beautiful and overwhelming. 
+      </p>
+      <p class="intro">
+        Lets begin.
+      </p>
     </div>
 
     <div class="content-container">
@@ -219,13 +227,14 @@
             <p>
               Here you can toggle between time served, age entered and age to see each variable's distribution for both the denied and granted groups.
             </p>
+            <button class = "button-38" id = "time_serv_at_int">TIME SERVED</button>
+            <button class = "button-38" id = "age_entered">AGE ENTERED</button>
+            <button class = "button-38" id = "age">AGE</button>
             <p>
               The similarities between distributions of granted and denied for these variables suggests that they're not determining factors
               in whether someone is granted or denied parole.
             </p>
-            <button class = "button-38" id = "time_serv_at_int">TIME SERVED</button>
-            <button class = "button-38" id = "age_entered">AGE ENTERED</button>
-            <button class = "button-38" id = "age">AGE</button>
+
 
           </section>
           <section id ="section16">
@@ -239,27 +248,32 @@
               <b>REAPPEAR</b>: Reappearances - release was previously denied.
               <br>
               <br>
-              <b>REAPP</b>: Parole violation hearings.
-              <br>
-              <br>
-              <b>RECISSION</b>: Hearings held after parole is granted but the parole board receives new information that prompts them to reconsider their decision.
-              <br>
-              <br>
-              <b>SP CONSDR</b>: Hearings held after successful appeal of parole denial.
+              <b>OTHER</b>: Parole violation hearings, hearings held after parole is granted but the parole board receives new information that prompts them to reconsider their decision, hearings held after successful appeal of parole denial.
             </p>
 
           </section>
           <section id ="section17">
-
+            <p>
+              Initial and reappear make up around 97% of the total interviews, so let's take a closer look at just these two interview types.
+            </p>
           </section>
           <section id ="section18">
-
+            <p>
+              Check out how the total initial and reappear interviews are composed by interview decisons.
+            </p>
           </section>
           <section id ="section19">
-
+            <p>
+              <b>Initial</b> interviews are granted parole <b>2.2%</b> more than reappear interviews.
+            </p>
           </section>
           <section id ="section20">
-
+            <p>
+              Not only are reappear interviews granted parole less often than initial interviews, but they are also denied parole more often.
+            </p>
+            <p>
+              <b>Reappear</b> interviews are denied parole <b>7%</b> less than initial interviews.
+            </p>
           </section>
       </div>
       <div id="container" class="svg-container">

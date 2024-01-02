@@ -11,13 +11,30 @@ body{
 
 h1 {
     text-align: left;
-    margin-top: 2.5em;
-    margin-left: 2.5em;
+    margin-top: 1em;
+    margin-left: auto;
+    margin-right: auto;
+    width: 70%;
     font-size: 5em;
+    padding: 1em;
+    line-height: 1.5;
 }
-h2{
+
+h3{
+  text-align: left;
+  margin-left: auto;
+  margin-right: auto;
+  width: 70%;
+  line-height: 2;
+}
+
+.intro {
     text-align: left;
-    margin-left: 2.5em;
+    margin-left: auto;
+    margin-right: auto;
+    width: 70%;
+    line-height: 1.5;
+
 }
 
 section {

@@ -93,7 +93,7 @@ function wrap(text, width) {
           word,
           line = [],
           lineNumber = 0,
-          lineHeight = 1.1, // ems
+          lineHeight = 1.1,
           y = text.attr("y"),
           dy = parseFloat(text.attr("dy")),
           tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
@@ -247,6 +247,7 @@ function addNormalDistLine (attribute){
                         );
 
                     const totalLength = lineEnter.node().getTotalLength();
+                    //some error here in the console
 
                     lineEnter
                         .attr("stroke-dasharray", totalLength + " " + totalLength)
@@ -360,6 +361,9 @@ function init() {
         if (d.parole_board_interview_type === "MERIT TIME" || d.parole_board_interview_type === "INITIAL" || d.parole_board_interview_type === "PIE" || d.parole_board_interview_type === "MEDICAL"|| d.parole_board_interview_type === "ECPDO" || d.parole_board_interview_type === "SUPP MERIT") {
             d.parole_board_interview_type = "INITIAL";
         }
+        else if (d.parole_board_interview_type === "SP CONSDR" || d.parole_board_interview_type === "RESCISSION" || d.parole_board_interview_type === "PV REAPP"){
+            d.parole_board_interview_type = "OTHER"
+        }
     });
 
     state.interviews.forEach(d => {
@@ -398,7 +402,7 @@ function init() {
 
     deniedTotal = state.interviews.filter(d => d.interview_decision === "DENIED").length;
     grantedTotal = state.interviews.filter(d=> d.interview_decision === "GRANTED").length;
-    blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
+    let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
     whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
     reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
     initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
@@ -473,18 +477,18 @@ function init() {
     const deniedPieData = preparePieData("DENIED");
     const grantedPieData = preparePieData("GRANTED");
 
-    // function preparePieData2(intType) {
-    //     return outcomes.map(outcome => {
-    //         let filteredData = state.interviews.filter(d => {
-    //             return d.interview_decision === outcome && d.parole_board_interview_type === intType;
-    //         });
+    function preparePieData2(intType) {
+        return outcomes.map(outcome => {
+            let filteredData = state.interviews.filter(d => {
+                return d.interview_decision === outcome && d.parole_board_interview_type === intType;
+            });
     
-    //         return { outcome: outcome, value: filteredData.length };
-    //     });
-    // }
+            return { outcome: outcome, value: filteredData.length };
+        });
+    }
 
-    // const initTypePieData = preparePieData2("INITIAL");
-    // const reapTypePieData = preparePieData2("REAPPEAR");
+    const initTypePieData = preparePieData2("INITIAL");
+    const reapTypePieData = preparePieData2("REAPPEAR");
 
     function calculateCombinedPercentages(data, categoryKey, outcomeKey) {
         let totalDenied = data.filter(d => d[outcomeKey] === "DENIED").length;
@@ -528,14 +532,14 @@ function init() {
         age: combinedAgeData
     };
 
+    //DATA FOR OVER 55 VS UNDER 55 NOT USED YET
     function processDataForButterflyChart(individuals) {
-        // Helper function to calculate average
+
         const calculateAverage = (data, key) => {
             const sum = data.reduce((acc, curr) => acc + (curr[key] || 0), 0);
             return sum / data.length;
         };
 
-            // Helper function to calculate average life percentage in prison
         const calculateAverageLifeInPrison = (data) => {
             const sum = data.reduce((acc, curr) => {
                 const lifePercentage = (curr.age - curr.age_entered) / curr.age *100;
@@ -544,11 +548,9 @@ function init() {
             return sum / data.length;
         };
     
-        // Split data into two groups
         const under55 = individuals.filter(d => d.age < 55);
         const age55AndUp = individuals.filter(d => d.age >= 55);
     
-        // Calculate averages for each group
         const averagesUnder55 = {
             age: calculateAverage(under55, 'age'),
             ageEntered: calculateAverage(under55, 'age_entered'),
@@ -569,7 +571,6 @@ function init() {
             lifeInPrison: calculateAverageLifeInPrison(age55AndUp)
         };
     
-        // Prepare data for the chart
         const butterflyChartData = [
             { category: 'Under 55', ...averagesUnder55 },
             { category: '55 and Up', ...averagesAge55AndUp }
@@ -578,23 +579,18 @@ function init() {
         return butterflyChartData;
     }
     
-    // Example usage
-    const butterflyChartData = processDataForButterflyChart(state.individuals);
 
-    function processDataForButterflyChart(data) {
+    function processDataForButterflyChart2(data) {
         const ageGroups = {
             'UNDER55': { granted: 0, denied: 0, total: 0 },
             '55ANDUP': { granted: 0, denied: 0, total: 0 }
         };
     
         data.forEach(d => {
-            // Determine the age group
             const ageGroup = d.age < 55 ? 'UNDER55' : '55ANDUP';
     
-            // Increment total count for the age group
             ageGroups[ageGroup].total += 1;
     
-            // Increment granted or denied count based on interview_decision
             if (d.interview_decision === 'GRANTED') {
                 ageGroups[ageGroup].granted += 1;
             } else if (d.interview_decision === 'DENIED') {
@@ -602,7 +598,6 @@ function init() {
             }
         });
     
-        // Calculate percentages
         Object.keys(ageGroups).forEach(group => {
             if (ageGroups[group].total > 0) {
                 ageGroups[group].percentGranted = (ageGroups[group].granted / ageGroups[group].total) * 100;
@@ -707,8 +702,8 @@ function init() {
         .on("mousemove",function(event, d) {
             // if (d3.select(this).classed("animation-complete")) {
                 let count = d[0][1] - d[0][0];
-                let formattedCount = count.toLocaleString(); // Format the count with commas
-                let percentage = (count / state.interviews.length) * 100; // Calculate the percentage
+                let formattedCount = count.toLocaleString(); 
+                let percentage = (count / state.interviews.length) * 100; 
                 let tooltipContent = `<b>${formattedCount} (${percentage.toFixed(1)}%)</b> interviews 
                 were given a <br>decision of <b>${d.key}</b>`;
                 
@@ -757,7 +752,7 @@ function init() {
     // .on("mousemove", function(event, d) {
     //     tooltip.style("display", "block")
     //                .html(d.length + " persons interviewed more than once")
-    //                .style("left", (event.pageX + 10) + "px") // Adjust based on page coordinates
+    //                .style("left", (event.pageX + 10) + "px")
     //                .style("top", (event.pageY - 10) + "px");
     //         })
     // .on("mouseout", mouseOut);
@@ -921,7 +916,7 @@ function init() {
     .attr('class', d => `pie-text-granted ${d.data.race.replace(/\s+/g, '-')}`)
     .attr('transform', d => {
         const [x, y] = arc.centroid(d);
-        return `translate(${x + leftCenterX}, ${y + svgCenterY})`; // Adjust position based on the pie's transform
+        return `translate(${x + leftCenterX}, ${y + svgCenterY})`; 
     })
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
@@ -930,129 +925,158 @@ function init() {
 
 
 //AGE PIE CHART
-    ageDeniedPieData.sort((a, b) => a.value - b.value);
-    ageGrantedPieData.sort((a, b) => a.value - b.value);
+    // ageDeniedPieData.sort((a, b) => a.value - b.value);
+    // ageGrantedPieData.sort((a, b) => a.value - b.value);
 
-    const ageArc = d3.arc()
-    .innerRadius(0)
-    .outerRadius(finalRadius);
-
-    const ageDeniedPie = d3.pie()
-    .value(d => d.value)
-    .sort(null)
-    (ageDeniedPieData);
-
-    const ageGrantedPie = d3.pie()
-    .value(d => d.value)
-    .sort(null)
-    (ageGrantedPieData);
-
-
-    // Add slices for the DENIED pie chart
-    svg.selectAll('.age-denied-slice')
-    .data(ageDeniedPie)
-    .enter()
-    .append('path')
-    .attr('class', d => `age-denied-slice ${d.data.ageGroup}`)
-    .attr('d', arc)
-    .attr('fill', d => ageColorScale(d.data.ageGroup))
-    .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
-    .attr("visibility", "hidden")
-    .on("mouseover", mouseOver)
-    .on("mousemove", function(event, d) {
-        const readableCategory = labelMapping[d.data.ageGroup] || d.data.ageGroup; 
-        let percent = calculatePercent(d.data.value, deniedTotal);
-        let tooltipContent = `<b>${percent}%</b> of the interviews <br> denied parole were <b>${readableCategory}</b>`;
-        tooltip
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px")
-            .html(tooltipContent);
-    })
-    .on("mouseout", mouseOut);
-
-    svg.selectAll('.age-granted-slice')
-    .data(ageGrantedPie)
-    .enter()
-    .append('path')
-    .attr('class', d => `age-granted-slice ${d.data.ageGroup}`)
-    .attr('d', arc)
-    .attr('fill', d => ageColorScale(d.data.ageGroup))
-    .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
-    .attr("visibility", "hidden")
-    .on("mouseover", mouseOver)
-    .on("mousemove", function(event, d) {
-        const readableCategory = labelMapping[d.data.ageGroup] || d.data.ageGroup; 
-        let percent = calculatePercent(d.data.value, grantedTotal);
-        let tooltipContent = `<b>${percent}%</b> of the interviews <br> granted parole were <b>${readableCategory}</b>`;
-        tooltip
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px")
-            .html(tooltipContent);
-    })
-    .on("mouseout", mouseOut);
-
-
-    //INTERVIEW TYPE PIE CHARTS
-
-    // initTypePieData.sort((a, b) => a.value - b.value);
-    // reapTypePieData.sort((a, b) => a.value - b.value);
-
-    // const arc2 = d3.arc()
+    // const ageArc = d3.arc()
     // .innerRadius(0)
     // .outerRadius(finalRadius);
 
-    // const initPie = d3.pie()
+    // const ageDeniedPie = d3.pie()
     // .value(d => d.value)
     // .sort(null)
-    // (initTypePieData);
+    // (ageDeniedPieData);
 
-    // const reapPie = d3.pie()
+    // const ageGrantedPie = d3.pie()
     // .value(d => d.value)
     // .sort(null)
-    // (reapTypePieData);
+    // (ageGrantedPieData);
 
-    // // Add slices for the initial pie chart
-    // svg.selectAll('.init-slice')
-    // .data(initPie)
+
+    // // Add slices for the DENIED pie chart
+    // svg.selectAll('.age-denied-slice')
+    // .data(ageDeniedPie)
     // .enter()
     // .append('path')
-    // .attr('class', d => `init-slice ${d.data.outcome}`)
+    // .attr('class', d => `age-denied-slice ${d.data.ageGroup}`)
     // .attr('d', arc)
-    // .attr('fill', d => decColorScale(d.data.outcome))
-    // .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
-    // .attr("visibility", "hidden")
-    // .on("mouseover", mouseOver)
-    // .on("mousemove", function(event, d) {
-    //     let percent = calculatePercent(d.data.value, initialTotal);
-    //     let tooltipContent = `<b>${percent}%</b> of initial interviews <br> were <b>${d.data.outcome}</b> parole`;
-    //     tooltip
-    //         .style("left", (event.pageX + 10) + "px")
-    //         .style("top", (event.pageY - 10) + "px")
-    //         .html(tooltipContent);
-    // })
-    // .on("mouseout", mouseOut)
-
-
-    // // Add slices for the reappearance pie chart
-    // svg.selectAll('.reappear-slice')
-    // .data(reapPie)
-    // .enter()
-    // .append('path')
-    // .attr('class', d => `reappear-slice ${d.data.intType}`)
-    // .attr('d', arc)
-    // .attr('fill', d => decColorScale(d.data.outcome))
+    // .attr('fill', d => ageColorScale(d.data.ageGroup))
     // .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
     // .attr("visibility", "hidden")
     // .on("mouseover", mouseOver)
     // .on("mousemove", function(event, d) {
-    //     let percent = calculatePercent(d.data.value, reappearTotal);
-    //     let tooltipContent = `<b>${percent}%</b> of reappearance interviews <br> were <b>${d.data.outcome}</b> parole`;
+    //     const readableCategory = labelMapping[d.data.ageGroup] || d.data.ageGroup; 
+    //     let percent = calculatePercent(d.data.value, deniedTotal);
+    //     let tooltipContent = `<b>${percent}%</b> of the interviews <br> denied parole were <b>${readableCategory}</b>`;
     //     tooltip
     //         .style("left", (event.pageX + 10) + "px")
     //         .style("top", (event.pageY - 10) + "px")
     //         .html(tooltipContent);
     // })
     // .on("mouseout", mouseOut);
+
+    // svg.selectAll('.age-granted-slice')
+    // .data(ageGrantedPie)
+    // .enter()
+    // .append('path')
+    // .attr('class', d => `age-granted-slice ${d.data.ageGroup}`)
+    // .attr('d', arc)
+    // .attr('fill', d => ageColorScale(d.data.ageGroup))
+    // .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
+    // .attr("visibility", "hidden")
+    // .on("mouseover", mouseOver)
+    // .on("mousemove", function(event, d) {
+    //     const readableCategory = labelMapping[d.data.ageGroup] || d.data.ageGroup; 
+    //     let percent = calculatePercent(d.data.value, grantedTotal);
+    //     let tooltipContent = `<b>${percent}%</b> of the interviews <br> granted parole were <b>${readableCategory}</b>`;
+    //     tooltip
+    //         .style("left", (event.pageX + 10) + "px")
+    //         .style("top", (event.pageY - 10) + "px")
+    //         .html(tooltipContent);
+    // })
+    // .on("mouseout", mouseOut);
+
+
+    //INTERVIEW TYPE PIE CHARTS
+
+    initTypePieData.sort((a, b) => a.value - b.value);
+    reapTypePieData.sort((a, b) => a.value - b.value);
+
+    const arc2 = d3.arc()
+    .innerRadius(0)
+    .outerRadius(finalRadius);
+
+    const initPie = d3.pie()
+    .value(d => d.value)
+    .sort(null)
+    (initTypePieData);
+
+    const reapPie = d3.pie()
+    .value(d => d.value)
+    .sort(null)
+    (reapTypePieData);
+
+    // Add slices for the initial pie chart
+    svg.selectAll('.init-slice')
+    .data(initPie)
+    .enter()
+    .append('path')
+    .attr('class', d => `init-slice ${d.data.outcome}`)
+    .attr('d', arc)
+    .attr('fill', d => decColorScale(d.data.outcome))
+    .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
+    .attr("visibility", "hidden")
+    .on("mouseover", mouseOver)
+    .on("mousemove", function(event, d) {
+        let percent = calculatePercent(d.data.value, initialTotal);
+        let tooltipContent = `<b>${percent}%</b> of initial interviews <br> were <b>${d.data.outcome}</b> parole`;
+        tooltip
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px")
+            .html(tooltipContent);
+    })
+    .on("mouseout", mouseOut)
+
+
+    // Add slices for the reappearance pie chart
+    svg.selectAll('.reap-slice')
+    .data(reapPie)
+    .enter()
+    .append('path')
+    .attr('class', d => `reap-slice ${d.data.outcome}`)
+    .attr('d', arc)
+    .attr('fill', d => decColorScale(d.data.outcome))
+    .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
+    .attr("visibility", "hidden")
+    .on("mouseover", mouseOver)
+    .on("mousemove", function(event, d) {
+        let percent = calculatePercent(d.data.value, reappearTotal);
+        let tooltipContent = `<b>${percent}%</b> of reappearance interviews <br> were <b>${d.data.outcome}</b> parole`;
+        tooltip
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px")
+            .html(tooltipContent);
+    })
+    .on("mouseout", mouseOut);
+
+        // PERCENT TEXT IN SLICES FOR THE HIGHLIGHT SECTIONS
+        svg.selectAll('.pie-text-init')
+        .data(initPie)
+        .enter()
+        .append('text')
+        .attr('class', d => `pie-text-init ${d.data.outcome}`)
+        .attr('transform', d => {
+            const [x, y] = arc.centroid(d);
+            return `translate(${x + leftCenterX}, ${y + svgCenterY})`;
+        })
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.35em')
+        .text(d => calculatePercent(d.data.value, initialTotal) + '%')
+        .attr('visibility', "hidden");
+    
+        svg.selectAll('.pie-text-reap')
+        .data(reapPie)
+        .enter()
+        .append('text')
+        .attr('class', d => `pie-text-reap ${d.data.outcome}`)
+        .attr('transform', d => {
+            const [x, y] = arc.centroid(d);
+            return `translate(${x + rightCenterX}, ${y + svgCenterY})`; 
+        })
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.35em')
+        .text(d => calculatePercent(d.data.value, reappearTotal) + '%')
+        .attr('visibility', "hidden");
 
     //INTERVIEW TYPE BAR CHART
     // let intChartData = [];
@@ -1217,7 +1241,7 @@ function init() {
 
 // RACE BUTTERFLY CHART
     raceButterflyyScale = d3.scaleBand()
-        .domain(combinedRaceData.map(d => d.category)) // Extract category names
+        .domain(combinedRaceData.map(d => d.category)) 
         .range([m.top, height - m.bottom])
         .padding(0.1);
         
@@ -1278,7 +1302,7 @@ function init() {
         .attr("text-anchor", "start");
 
     raceButterflyyAxis.each(function() {
-            wrap(d3.select(this), 150); // Adjust the second argument for the desired width
+            wrap(d3.select(this), 150); 
         });
 
     //TEXT ELEMENT FOR HIGHLIGHTING
@@ -1313,7 +1337,7 @@ function init() {
 // AGE BUTTERFLY CHART
 
     ageButterflyyScale = d3.scaleBand()
-        .domain(combinedAgeData.map(d => d.category)) // Extract category names
+        .domain(combinedAgeData.map(d => d.category)) 
         .range([m.top, height - m.bottom])
         .padding(0.1);
 
@@ -1403,7 +1427,7 @@ function init() {
 // INTERVIEW TYPE BUTTERFLY CHART
 
 intButterflyyScale = d3.scaleBand()
-.domain(combinedInterviewTypeData.map(d => d.category)) // Extract category names
+.domain(combinedInterviewTypeData.map(d => d.category))
 .range([m.top, height - m.bottom])
 .padding(0.1);
 
@@ -1501,16 +1525,17 @@ combinedInterviewTypeData.forEach(d => {
 
     radiusScale = d3.scaleSqrt()
     .domain([0, d3.max(interviewTypeProportions.values())])
-    .range([0, maxBubbleRadius]); // maxBubbleRadius depends on your SVG size
+    .range([0, maxBubbleRadius]); 
 
     intxScale = d3.scaleBand()
     .domain([...interviewTypeProportions.keys()])
     .range([0, width]);
 
     intyScale = d3.scaleLinear()
-    // You can use a constant or some function of the data for y positions
     .domain([0, 1])
     .range([height, 0]);
+
+    console.log(state.intTypeData)
 
     bubbles = svg.selectAll(".bubble")
         .data([...interviewTypeProportions.entries()])
@@ -1523,7 +1548,15 @@ combinedInterviewTypeData.forEach(d => {
         // .attr("r", d => radiusScale(d[1]))
         .attr("r", 0)
         .attr("fill", d => typeColorScale(d[0]))
-        .attr("data-target-radius", d => radiusScale(d[1])); // Set target radius as a data attribute
+        .attr("data-target-radius", d => radiusScale(d[1]))
+        .on("mouseover", mouseOver)
+        .on("mousemove", function(event, d) {
+            tooltip
+                .html(`${d[0]} interviews <br>make up ${(d[1] * 100).toFixed(2)}% <br>of the total interviews`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", mouseOut)
 
 
     svg.selectAll(".bubble-label")
@@ -1531,14 +1564,14 @@ combinedInterviewTypeData.forEach(d => {
     .enter().append("text")
     .attr("x", (d, i) => {
         let radius = radiusScale(d[1]);
-        return svgCenterX + (radius + 100) * Math.cos(2 * Math.PI * i / interviewTypeProportions.size);
+        return svgCenterX + (radius + 200) * Math.cos(2 * Math.PI * i / interviewTypeProportions.size);
     })
     .attr("y", (d, i) => {
         let radius = radiusScale(d[1]);
-        return svgCenterY + (radius + 100) * Math.sin(2 * Math.PI * i / interviewTypeProportions.size);
+        return svgCenterY + (radius + 200) * Math.sin(2 * Math.PI * i / interviewTypeProportions.size);
     })
     .attr("class", d => `bubble-label ${d[0]}`)
-    .text(d => d[0]) // The interview type
+    .text(d => d[0])
     .attr("text-anchor", "middle")
     .attr("visibility", "hidden");
 
@@ -1546,91 +1579,6 @@ combinedInterviewTypeData.forEach(d => {
 //KERNEL DENSITY
 kdeChartContainer = svg.append("g")
     .attr("class", "kdeChartContainer")
-
-// function updateKDEPlot(attribute) {
-//     const maxValue = d3.max(state.interviews, d => d[attribute]);
-
-//     kdex = d3.scaleLinear()
-//     .range([0, width])
-//     .domain([-10, maxValue+10]);
-
-
-//     kdeChartContainer.select(".x-axis")
-//         .transition()
-//         .duration(100)
-//         .call(d3.axisBottom(kdex).ticks(5));
-
-//     const kde = kernelDensityEstimator(kernelEpanechnikov(10), kdex.ticks(60));
-
-
-//     const density1 = kde(state.interviews
-//         .filter(d => d.interview_decision === "DENIED" && d[attribute] <= maxValue)
-//         .map(d => d[attribute]));
-//     const density2 = kde(state.interviews
-//         .filter(d => d.interview_decision === "GRANTED" && d[attribute] <= maxValue)
-//         .map(d => d[attribute]));
-
-//         const maxValueY = d3.max([...density1, ...density2], d => d[1]);
-
-//         kdey = d3.scaleLinear()
-//             .range([height, 0])
-//             .domain([0, maxValueY]);
-
-//     kdeChartContainer.select(".y-axis")
-//     .transition()
-//     .duration(100)
-//     .call(d3.axisLeft(kdey).ticks(5));
-    
-//     kdeChartContainer.selectAll(".density1-path")
-//         .data([density1])
-//         .join(
-//             enter => enter.append("path")
-//                 .attr("class", "density1-path mypath")
-//                 .attr("fill", "#B15E6C")
-//                 .attr("opacity", ".6")
-//                 .attr("stroke", "#000")
-//                 .attr("stroke-width", 1)
-//                 .attr("stroke-linejoin", "round")
-//                 .attr("d", d3.line()
-//                     .curve(d3.curveBasis)
-//                     .x(d => kdex(d[0]))
-//                     .y(d => kdey(d[1]))
-//                     ),
-//             update => update
-//                 .transition().duration(100)
-//                 .attr("d", d3.line()
-//                     .curve(d3.curveBasis)
-//                     .x(d => kdex(d[0]))
-//                     .y(d => kdey(d[1]))
-//                     ),
-//             exit => exit.remove()
-//             )
-
-//     kdeChartContainer.selectAll(".density2-path")
-//         .data([density2])
-//         .join(
-//             enter => enter.append("path")
-//                 .attr("class", "density2-path mypath")
-//                 .attr("fill", "#BCD979")
-//                 .attr("opacity", ".6")
-//                 .attr("stroke", "#000")
-//                 .attr("stroke-width", 1)
-//                 .attr("stroke-linejoin", "round")
-//                 .attr("d", d3.line()
-//                 .curve(d3.curveBasis)
-//                 .x(d => kdex(d[0]))
-//                 .y(d => kdey(d[1]))
-//                 ),
-//         update => update
-//             .transition().duration(100)
-//             .attr("d", d3.line()
-//                 .curve(d3.curveBasis)
-//                 .x(d => kdex(d[0]))
-//                 .y(d => kdey(d[1]))
-//                 ),
-//         exit => exit.remove()
-//         )
-// }
 
 kdeChartContainer.append("g")
     .attr("class", "x-axis")
@@ -1641,20 +1589,10 @@ kdeChartContainer.append("g")
 
 
 
-
-// // Kernel functions
-// function kernelDensityEstimator(kernel, X) {
-//     return V => X.map(x => [x, d3.mean(V, v => kernel(x - v))]);
-// }
-
-// function kernelEpanechnikov(k) {
-//     return v => Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
-// }
-
-
     draw();
 }
 
+/* DRAW FUNCTION */
 function draw() {
 
 
@@ -1673,8 +1611,8 @@ function draw() {
     tl1 = gsap.timeline({
         scrollTrigger: {
             trigger: "#section1",
-            start: "top center", // Adjust as needed
-            end: "center center", // Adjust to control the scroll length
+            start: "top center", 
+            end: "center center", 
         },
     });
 
@@ -1783,7 +1721,6 @@ function draw() {
         },
     });
 
-    // Add animations to the timeline
     outcomes.forEach((outcome, i) => {
         verticalBarTimeline
         .set(`.bar1-${outcome}`, { pointerEvents: 'auto' })
@@ -1941,7 +1878,7 @@ function draw() {
     }, 0)
     .to('.denied-slice:not(.WHITE), .granted-slice:not(.WHITE)', {
         visibility: "visible",
-        opacity: 0.3, // Dim other slices
+        opacity: 0.3,
         duration: 1,
         ease: "power1.inOut"
     }, 0)
@@ -1971,7 +1908,7 @@ function draw() {
     }, 0)
     .to('.denied-slice:not(.BLACK), .granted-slice:not(.BLACK)', {
         visibility: "visible",
-        opacity: 0.3, // Dim other slices
+        opacity: 0.3,
         duration: 1,
         ease: "power1.inOut"
     }, 0)
@@ -2047,7 +1984,7 @@ function draw() {
     // })
     .to('.race-butterfly-granted.HISPANIC, .race-butterfly-granted.AMERIND_ALSK, .race-butterfly-granted.ASIAN_PACIFIC, .race-butterfly-granted.UNKNOWN_OTHER, .race-butterfly-denied.HISPANIC, .race-butterfly-denied.AMERIND_ALSK, .race-butterfly-denied.ASIAN_PACIFIC, .race-butterfly-denied.UNKNOWN_OTHER', {
         duration: 1,
-        opacity: 0.3, // Fade out other bars
+        opacity: 0.3, 
         ease: 'power1.inOut'
     }, '<')
     .to('.race-butterfly-percentage-granted.BLACK, .race-butterfly-percentage-denied.BLACK, .race-butterfly-percentage-granted.WHITE, .race-butterfly-percentage-denied.WHITE', {
@@ -2055,7 +1992,7 @@ function draw() {
         opacity: 1,
         visibility: "visible",
         ease: 'power1.inOut'
-    }, '<') // Adjust timing as needed
+    }, '<') 
     .to('.raceButterflyyAxis .tick text', {
         duration: 1,
         ease: 'power1.inOut',
@@ -2343,12 +2280,12 @@ transitionToAgeButterflyTL
             end: "center center",
             scrub: true,
             onEnter: () => {
-                state.kdeFilter = "prop_sent_served"; // Set the attribute for KDE plot
-                updateKDEPlot(state.kdeFilter); // Update KDE plot
+                state.kdeFilter = "prop_sent_served"; 
+                updateKDEPlot(state.kdeFilter); 
             },
             onLeaveBack: () => {
-                state.kdeFilter = "null"; // Reset or change the attribute
-                updateKDEPlot(state.kdeFilter); // Update KDE plot accordingly
+                state.kdeFilter = "null"; 
+                updateKDEPlot(state.kdeFilter); 
             }
         }
     });
@@ -2458,11 +2395,11 @@ transitionToAgeButterflyTL
         });
     }, 0);
 
-    kdeToBubblesTL.to(".bubble-label",{
-        visibility: "visible",
-        duration: 1,
-        ease: 'power1.Out'
-    });
+    // kdeToBubblesTL.to(".bubble-label",{
+    //     visibility: "visible",
+    //     duration: 1,
+    //     ease: 'power1.Out'
+    // });
 
 
 //     // mergeCirclesTimeline
@@ -2489,97 +2426,169 @@ transitionToAgeButterflyTL
 
 
 
-//     const moveBubblesTL = gsap.timeline({
-//         scrollTrigger: {
-//             trigger: "#section9",
-//             start: "top center",
-//             end: "center center",
-//             scrub: true
-//         }
-//     });
+    const moveBubblesTL = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section17",
+            start: "top center",
+            end: "center center",
+            scrub: true
+        }
+    });
 
-//     bubbles.each(function(d) {
+    bubbles.each(function(d) {
 
-//         let targetX, targetY, radius;
+        let targetX, targetY, radius;
     
-//         if (d[0] === 'REAPPEAR') {
-//             targetX = rightCenterX;
-//             targetY = svgCenterY;
-//             radius = finalRadius;
-//         } 
-//         else if (d[0]=== 'INITIAL'){
-//             targetX = leftCenterX;
-//             targetY = svgCenterY;
-//             radius = finalRadius;
-//         }
-//         else {
-//             targetX = Math.random() * width;
-//             targetY = Math.random() * height;
-//             radius = 0;
-//         }
+        if (d[0] === 'REAPPEAR') {
+            targetX = rightCenterX;
+            targetY = svgCenterY;
+            radius = finalRadius;
+        } 
+        else if (d[0]=== 'INITIAL'){
+            targetX = leftCenterX;
+            targetY = svgCenterY;
+            radius = finalRadius;
+        }
+        else {
+            targetX = Math.random() * width;
+            targetY = Math.random() * height;
+            radius = 0;
+        }
     
-//         moveBubblesTL.to(this, {
-//             duration: 3,
-//             ease: 'power1.inOut',
-//             attr: { cx: targetX, cy: targetY, r: radius}
-//         }, "<");
-//     });
+        moveBubblesTL.to(this, {
+            duration: 3,
+            ease: 'power1.inOut',
+            attr: { cx: targetX, cy: targetY, r: radius}
+        }, "<");
+    });
 
-// // Animate labels for 'REAPPEAR' and 'INITIAL'
-//     svg.selectAll(".bubble-label.REAPPEAR")
-//         .each(function(d) {
-//             moveBubblesTL.to(this, {
-//                 duration: 3,
-//                 ease: 'power1.inOut',
-//                 attr:{
-//                     x: rightCenterX,
-//                     y: svgCenterY + 150
-//                 }
-//             }, "<");
-//         });
+    moveBubblesTL
+    .to(".bubble-label.REAPPEAR, .bubble-label.INITIAL", {
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.inOut'
+    })
 
-//         svg.selectAll(".bubble-label.INITIAL")
-//         .each(function(d) {
-//             moveBubblesTL.to(this, {
-//                 duration: 3,
-//                 ease: 'power1.inOut',
-//                 attr:{
-//                     x: leftCenterX,
-//                     y: svgCenterY + 150
-//                 }
-//             }, "<");
-//         });
+// Animate labels for 'REAPPEAR' and 'INITIAL'
+    svg.selectAll(".bubble-label.REAPPEAR")
+        .each(function(d) {
+            moveBubblesTL.to(this, {
+                duration: 3,
+                ease: 'power1.inOut',
+                attr:{
+                    x: rightCenterX,
+                    y: svgCenterY + 150
+                }
+            }, "<");
+        });
 
-//     // Hide other labels
-//     svg.selectAll(".bubble-label:not(.REAPPEAR):not(.INITIAL)")
-//         .each(function() {
-//             moveBubblesTL.to(this, {
-//                 duration: 3,
-//                 ease: 'power1.inOut',
-//                 opacity: 0
-//             }, "<");
-//         });
+        svg.selectAll(".bubble-label.INITIAL")
+        .each(function(d) {
+            moveBubblesTL.to(this, {
+                duration: 3,
+                ease: 'power1.inOut',
+                attr:{
+                    x: leftCenterX,
+                    y: svgCenterY + 150
+                }
+            }, "<");
+        });
 
-//     const interviewPieTL = gsap.timeline({
-//         scrollTrigger: {
-//         trigger: "#section10",
-//         start: "top center",
-//         end: "center center",
-//         scrub: 1
-//         }
-//     });
+    // Hide other labels
+    svg.selectAll(".bubble-label:not(.REAPPEAR):not(.INITIAL)")
+        .each(function() {
+            moveBubblesTL.to(this, {
+                duration: 3,
+                ease: 'power1.inOut',
+                opacity: 0
+            }, "<");
+        });
 
-//     interviewPieTL
-//     .to('.bubble',{
-//         visibility: "hidden",
-//         duration: 2,
-//         ease: 'power1.out'
-//         }, ">")
-//     .to('.init-slice, .reappear-slice', {
-//         visibility: "visible",
-//         duration: 2,
-//         ease: 'power1.in'
-//     }, '<');
+    const interviewPieTL = gsap.timeline({
+        scrollTrigger: {
+        trigger: "#section18",
+        start: "top center",
+        end: "center center",
+        scrub: 1
+        }
+    });
+
+    interviewPieTL
+    .to('.bubble',{
+        visibility: "hidden",
+        duration: 2,
+        ease: 'power1.out'
+        }, ">")
+    .to('.init-slice, .reap-slice', {
+        visibility: "visible",
+        duration: 2,
+        ease: 'power1.in'
+    }, '<');
+
+    const highlightIntPieTL1 = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section19",
+            start: "top center",
+            end: "center center",
+            scrub: true
+        }
+    });
+
+    highlightIntPieTL1
+    .set('.init-slice, .reap-slice', { pointerEvents: 'none' })
+
+    .to('.init-slice.GRANTED, .reap-slice.GRANTED',{
+        visibility: "visible",
+        opacity: 1,
+        duration: 1,
+        ease: "power1.inOut"
+    }, 0)
+    .to('.init-slice:not(.GRANTED), .reap-slice:not(.GRANTED)', {
+        visibility: "visible",
+        opacity: 0.3,
+        duration: 1,
+        ease: "power1.inOut"
+    }, 0)
+    .to('.pie-text-init.GRANTED, .pie-text-reap.GRANTED', {
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.inOut'
+    }, 0);
+
+    const highlightIntPieTL2 = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section20",
+            start: "top center",
+            end: "center center",
+            scrub: true
+        }
+    });
+
+    highlightIntPieTL2
+    .set('.init-slice, .reap-slice', { pointerEvents: 'none' })
+    .to('.init-slice.DENIED, .reap-slice.DENIED', {
+        visibility: "visible",
+        opacity: 1,
+        duration: 1,
+        ease: "power1.inOut"
+    }, 0)
+    .to('.init-slice:not(.DENIED), .reap-slice:not(.DENIED)', {
+        visibility: "visible",
+        opacity: 0.3,
+        duration: 1,
+        ease: "power1.inOut"
+    }, 0)
+    .to('.pie-text-init.DENIED, .pie-text-reap.DENIED', {
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.inOut'
+    }, 0)
+    .to('.pie-text-init.GRANTED, .pie-text-reap.GRANTED', {
+        visibility: "visible",
+        opacity: .2,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, 0);
 
     
 };
