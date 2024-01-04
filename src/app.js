@@ -423,7 +423,6 @@ function init() {
 
     over55intType = d3.group(over55, d => d.parole_board_interview_type);
 
-    console.log(state.interviews)
 
     //DATA FOR STACKING
     let formattedData = [];
@@ -434,10 +433,17 @@ function init() {
             formattedData[0][outcome] = values.length;
     });
 
+    console.log(formattedData)
+
     let stack = d3.stack()
     .keys(outcomes);
 
     let stackedData = stack(formattedData);
+
+    console.log(state.outcomeData.keys)
+
+    
+
 
     interviewTypeData = intTypes.map(type => ({
         type: type,
@@ -797,6 +803,13 @@ function init() {
     .attr("dx", "-.8em")
     .attr("dy", ".15em");
 
+    let ticks = d3.selectAll(".tick text");
+
+    ticks.attr("class", function(d){
+        if(d === 'GRANTED'){ return "granted-tick"; }
+        else if(d === 'DENIED'){ return "denied-tick"; }
+    });
+
     // WHOLE CIRCLES 
     deniedCircle = svg.append("circle")
     .attr("cx", outcomexScale('DENIED') + outcomexScale.bandwidth() / 2)
@@ -1019,7 +1032,7 @@ function init() {
     .on("mouseover", mouseOver)
     .on("mousemove", function(event, d) {
         let percent = calculatePercent(d.data.value, initialTotal);
-        let tooltipContent = `<b>${percent}%</b> of initial interviews <br> were <b>${d.data.outcome}</b> parole`;
+        let tooltipContent = `<b>${percent}%</b> of initial interviews <br> were given a(n) <br><b>${d.data.outcome}</b> decision`;
         tooltip
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 10) + "px")
@@ -1041,7 +1054,7 @@ function init() {
     .on("mouseover", mouseOver)
     .on("mousemove", function(event, d) {
         let percent = calculatePercent(d.data.value, reappearTotal);
-        let tooltipContent = `<b>${percent}%</b> of reappearance interviews <br> were <b>${d.data.outcome}</b> parole`;
+        let tooltipContent = `<b>${percent}%</b> of reappearance interviews <br> were given a(n) <br><b>${d.data.outcome}</b> decision`;
         tooltip
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 10) + "px")
@@ -1736,12 +1749,17 @@ function draw() {
     });
 
     const axisYPosition = d3.max(outcomes, outcome => outcomeyScale(state.outcomeData.get(outcome).length));
-    verticalBarTimeline.to(".outcomeBarsAxis", {
+    
+    verticalBarTimeline
+    .to(".outcomeBarsAxis", {
         attr: { transform: `translate(0, ${axisYPosition})` },
-        visibility: "visible", 
         duration: 2,
         ease: "power1.inOut",
-    }, "<");
+    }, "<")
+    .to(".outcomeBarsAxis", {
+        visibility: "visible",
+        ease: "power1.inOut"
+    }, ">");
 
     // addBarCounts(); 
     // verticalBarTimeline.to('.bar-count', {
@@ -1772,30 +1790,25 @@ function draw() {
         visibility: "hidden",
         duration: 3,
         ease: 'power1.inOut'
-    }, "<");
-
-    moveBarsTimeline.to('.outcomeBarsAxis', {
+    }, "<")
+    .to('.outcomeBarsAxis', {
         visibility: "hidden",
         duration: 3,
         ease: 'power1.inOut'
-    }, "<");
-
-    //turn bars into ovals
-    moveBarsTimeline.to('.bar1-GRANTED, .bar1-DENIED', {
+    }, "<")
+    .to('.bar1-GRANTED, .bar1-DENIED', {
         duration: 3,
         rx: "50%",
         ry: "50%",
         ease: 'power1.inOut'
-    }, ">");
-
-    moveBarsTimeline.to('.denied-circle, .granted-circle', {
+    }, ">")
+    .to('.denied-circle, .granted-circle', {
         visibility: "visible",
         duration: 3,
         attr: { r: circleRadius },
         ease: 'power1.inOut'
-    }, ">");
-    
-    moveBarsTimeline.to('.denied-circle', {
+    }, ">")
+    .to('.denied-circle', {
         duration: 3,
         attr: { 
             cx: rightCenterX,
@@ -1803,9 +1816,8 @@ function draw() {
             r: finalRadius 
         },
         ease: 'power1.inOut'
-    }, "<");
-    
-    moveBarsTimeline.to('.granted-circle', {
+    }, "<")
+    .to('.granted-circle', {
         duration: 3,
         attr: { 
             cx: leftCenterX,
@@ -1813,15 +1825,39 @@ function draw() {
             r: finalRadius 
         },
         ease: 'power1.inOut'
-    }, '<');
-
-    moveBarsTimeline.to('.bar1-DENIED, .bar1-GRANTED', {
+    }, '<')
+    .to('.bar1-DENIED, .bar1-GRANTED', {
         duration: 3,
         y: circleVerticalCenter, 
         height: 0, 
         visibility: "hidden",
         ease: 'power1.inOut'
     }, "<");
+
+
+//     let finalY = svgCenterY + finalRadius + 30; 
+
+// moveBarsTimeline
+//     .to('.granted-tick', {
+//         style: {
+//             transform: `translate(${leftCenterX}, ${finalY})`
+//         },
+//         duration: 3,
+//         visibility: "visible",
+//         ease: 'power1.inOut'
+//     }, "<")
+//     .to('.denied-tick', {
+//         style: {
+//             transform: `translate(${rightCenterX}, ${finalY})`
+//         },
+//         duration: 3,
+//         visibility: "visible",
+//         ease: 'power1.inOut'
+//     }, "<");
+
+
+
+
 
     moveBarsTimeline.to('.circle-label', {
         visibility: "visible",
@@ -2372,10 +2408,10 @@ transitionToAgeButterflyTL
                 addNormalDistLine(state.kdeNDFilter);
             },
             onLeaveBack: () => {
-                // state.btnFilter = "time_at_"; 
-                // updateKDEPlot(state.btnFilter);
-                // state.kdeNDFilter = "prop_sent_served";
-                // addNormalDistLine(state.kdeNDFilter);
+                state.btnFilter = "time_serv_at_int"; 
+                updateKDEPlot(state.btnFilter);
+                state.kdeNDFilter = "null";
+                addNormalDistLine(state.kdeNDFilter);
             }
         }
     });
