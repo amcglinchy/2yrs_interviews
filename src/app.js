@@ -6,13 +6,13 @@ gsap.registerPlugin(ScrollTrigger);
 /* CONSTANTS GLOBALS*/
 const width = window.innerWidth * 0.7,
     height = window.innerHeight * 0.8,
-    m = { top: 20, bottom: 80, left: 20, right: 20 };
+    m = { top: 20, bottom: 80, left: 10, right: 10 };
 const circleRadius = 50;
 const initialCircleRadius = 0;
 const finalRadius = 120;
 const circleVerticalCenter = height / 2;
 const raceColors = ['#2292A4', '#D96C06', '#FADF63', '#A67DB8', '#E0607E', "#D0AE8E"];
-const barColors = [ "#BCD979", "#B15E6C","#3A5683", "#93BEDF", "#35A66D"];
+const barColors = [  "#B15E6C", "#BCD979", "#3A5683", "#93BEDF", "#35A66D"];
 const bubbleColors = ['#9395D3', '#99621E', '#EDB6A3', '#483A58','#6EFAFB' ];
 const ageColors = ["#87BBA2", "#72195A", "#CBBAED", "#E9DF00", "#F78764"]
 const svgCenterX = width / 2;
@@ -21,6 +21,7 @@ const leftCenterX = svgCenterX - width / 6;
 const rightCenterX = svgCenterX + width / 6;
 const maxBubbleRadius = 120;
 const spreadRadius = Math.min(width, height) / 3;
+const ageGroupOrder = ["UNDER25", "25_34", "35_44", "45_54", "OVER55"];
 const labelMapping = {
     "AMERIND_ALSK": "AMERICAN INDIAN / ALASKAN",
     "ASIAN_PACIFIC": "ASIAN / PACIFIC ISLANDER",
@@ -30,6 +31,11 @@ const labelMapping = {
     '35_44': "35-44",
     '45_54': '45-54',
     'OVER55': "OVER 55",
+    'prop_sent_served': 'Percentage of Maximum Sentence Served at Time of Interview',
+    'age_entered': 'Age the Interviewee Entered Prison',
+    'age': 'Age of Individual at Time of Interview',
+    'time_serv_at_int': 'Time Served in Years at Time of Interview',
+    'null': ' '
 };
 
 /* GLOBALS */
@@ -73,7 +79,11 @@ function arePieChartsInteractive() {
 
 //MOUSE EVENTS
 let mouseOver = (event) => {
-    tooltip.style("display", "block")
+    tooltip
+    .style("opacity", 0)
+    .style("display", "block")
+    .style("left", (event.pageX + 10) + "px")
+    .style("top", (event.pageY - 10) + "px")
 };
 
 let mouseOut = (event) => {
@@ -130,10 +140,10 @@ function updateKDEPlot(attribute) {
     .range([m.left, width-m.right])
     .domain([-10, maxValue+10]);
 
-    kdeChartContainer.selectAll(".x-axis")
+    kdeChartContainer.selectAll(".kde-x-axis")
     .join(
         enter => enter.append("g")
-            .attr("class", "x-axis"),
+            .attr("class", "kde-x-axis"),
         update => update
             .transition()
             .duration(100)
@@ -146,12 +156,17 @@ function updateKDEPlot(attribute) {
     const kde = kernelDensityEstimator(kernelEpanechnikov(10), kdex.ticks(60));
 
 
-    const density1 = kde(state.interviews
-        .filter(d => d.interview_decision === "DENIED" && d[attribute] <= maxValue)
-        .map(d => d[attribute]));
-    const density2 = kde(state.interviews
-        .filter(d => d.interview_decision === "GRANTED" && d[attribute] <= maxValue)
-        .map(d => d[attribute]));
+    const density1 = kde(
+        state.interviews
+            .filter(d => d.interview_decision === "DENIED" && Number.isFinite(d[attribute]))
+            .map(d => d[attribute])
+    );
+    
+    const density2 = kde(
+        state.interviews
+            .filter(d => d.interview_decision === "GRANTED" && Number.isFinite(d[attribute]))
+            .map(d => d[attribute])
+    );
 
         const maxValueY = d3.max([...density1, ...density2], d => d[1]);
 
@@ -159,17 +174,17 @@ function updateKDEPlot(attribute) {
         .range([height-m.bottom, m.top])
         .domain([0, maxValueY]);
 
-    kdeChartContainer.selectAll(".y-axis")
-    .join(
-        enter => enter.append("g")
-            .attr("class", "y-axis"),
-        update => update
-            .transition()
-            .duration(100)
-            .call(d3.axisLeft(kdey).ticks(5))
-            .attr("transform", `translate(${m.left}, 0)`),
-        exit => exit.remove()
-    );
+    // kdeChartContainer.selectAll(".y-axis")
+    // .join(
+    //     enter => enter.append("g")
+    //         .attr("class", "y-axis"),
+    //     update => update
+    //         .transition()
+    //         .duration(100)
+    //         .call(d3.axisLeft(kdey).ticks(5))
+    //         .attr("transform", `translate(${m.left}, 0)`),
+    //     exit => exit.remove()
+    // );
      
     kdeChartContainer.selectAll(".density1-path")
         .data([density1])
@@ -220,56 +235,280 @@ function updateKDEPlot(attribute) {
                 ),
         exit => exit.remove()
         )
-}
 
-function addNormalDistLine (attribute){
-
-    if (attribute != "null"){
-
-        const mean = d3.mean(state.interviews, d => d[attribute]);
-        const stdDev = d3.deviation(state.interviews, d => d[attribute]);
-    
-        const normalPoints = kdex.ticks(60).map(d => [d, normalDistribution(d, mean, stdDev)]);
-    
-        kdeChartContainer.selectAll(".normal-dist")
-            .data([normalPoints])
-            .join(
-                enter => {
-                    const lineEnter = enter.append("path")
-                        .attr("class", "normal-dist")
-                        .attr("fill", "none")
-                        .attr("stroke", "red")
-                        .attr("stroke-width", 1.5)
-                        .attr("d", d3.line()
-                            .curve(d3.curveBasis)
-                            .x(d => kdex(d[0]))
-                            .y(d => kdey(d[1]))
-                        );
-
-                    const totalLength = lineEnter.node().getTotalLength();
-                    //some error here in the console
-
-                    lineEnter
-                        .attr("stroke-dasharray", totalLength + " " + totalLength)
-                        .attr("stroke-dashoffset", totalLength)
-                        .transition().duration(1000)
-                        .attr("stroke-dashoffset", 0);
-
-                },
+        kdeChartContainer.selectAll(".kde-x-label")
+        .data([attribute])
+        .join(
+            enter => enter.append("text")
+                .attr("class", "kde-x-label")
+                .attr("x", width / 2)
+                .attr("y", height) 
+                .attr("text-anchor", "middle")
+                .text(d => labelMapping[d] || `Attribute: ${d}`), 
                 update => update
-                    .transition().duration(100)
-                    .attr("d", d3.line()
-                            .curve(d3.curveBasis)
-                            .x(d => kdex(d[0]))
-                            .y(d => kdey(d[1]))
-                    ),
+                .transition()
+                .duration(100)
+                .attr("x", width / 2)
+                .attr("y", height)
+                .text(d => labelMapping[d] || `Attribute: ${d}`),
                 exit => exit.remove()
-            );
-        }
-        else{
-            kdeChartContainer.selectAll(".normal-dist").remove();
-        }
+        );
 }
+
+// function addNormalDistLine (attribute){
+
+//     if (attribute != "null"){
+
+//         const mean = d3.mean(state.interviews, d => d[attribute]);
+//         const stdDev = d3.deviation(state.interviews, d => d[attribute]);
+    
+//         const normalPoints = kdex.ticks(60).map(d => [d, normalDistribution(d, mean, stdDev)]);
+    
+//         kdeChartContainer.selectAll(".normal-dist")
+//             .data([normalPoints])
+//             .join(
+//                 enter => {
+//                     const lineEnter = enter.append("path")
+//                         .attr("class", "normal-dist")
+//                         .attr("fill", "none")
+//                         .attr("stroke", "red")
+//                         .attr("stroke-width", 1.5)
+//                         .attr("d", d3.line()
+//                             .curve(d3.curveBasis)
+//                             .x(d => kdex(d[0]))
+//                             .y(d => kdey(d[1]))
+//                         );
+
+//                     const totalLength = lineEnter.node().getTotalLength();
+//                     //some error here in the console
+
+//                     lineEnter
+//                         .attr("stroke-dasharray", totalLength + " " + totalLength)
+//                         .attr("stroke-dashoffset", totalLength)
+//                         .transition().duration(1000)
+//                         .attr("stroke-dashoffset", 0);
+
+//                 },
+//                 update => update
+//                     .transition().duration(100)
+//                     .attr("d", d3.line()
+//                             .curve(d3.curveBasis)
+//                             .x(d => kdex(d[0]))
+//                             .y(d => kdey(d[1]))
+//                     ),
+//                 exit => exit.remove()
+//             );
+//         }
+//         else{
+//             kdeChartContainer.selectAll(".normal-dist").remove();
+//         }
+// }
+
+function updateBarChart(attribute, includeGranted = false) {
+    if (!attribute || attribute === "null") {
+        svg.selectAll('.bar, .x-axis').remove(); // Remove all bars and the x-axis
+        return; // Exit the function
+    }
+
+    // Prepare data for 'DENIED' and optionally 'GRANTED'
+    const prepareData = (decision) => state.interviews
+        .filter(d => d.interview_decision === decision && d.parole_board_interview_type === "REAPPEAR")
+        .reduce((acc, curr) => {
+            acc[curr[attribute]] = (acc[curr[attribute]] || 0) + 1;
+            return acc;
+        }, {});
+
+    const deniedData = prepareData("DENIED");
+    let grantedData = {};
+    if (includeGranted) {
+        grantedData = prepareData("GRANTED");
+    }
+
+    // Combine data and determine the max value
+    const combinedData = Object.keys({...deniedData, ...grantedData}).map(key => ({
+        key: key,
+        deniedValue: deniedData[key] || 0,
+        grantedValue: grantedData[key] || 0
+    }));
+    combinedData.sort((a, b) => {
+        return ageGroupOrder.indexOf(b.key) - ageGroupOrder.indexOf(a.key);
+    });
+
+    const maxValue = d3.max(combinedData, d => Math.max(d.deniedValue, d.grantedValue));
+
+    // Define scales
+    const x0 = d3.scaleBand()
+        .domain(combinedData.map(d => d.key))
+        .range([m.left, width-m.right])
+        .paddingInner(0.1);
+
+    const x1 = d3.scaleBand()
+        .domain(includeGranted ? ["DENIED", "GRANTED"] : ["DENIED"])
+        .rangeRound([m.left, x0.bandwidth()-m.right])
+        .padding(0.05);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, maxValue])
+        .range([height-m.bottom, 0]);
+
+    // Draw bars
+    svg.selectAll(".category-group").remove(); // Clear previous groups
+    const categoryGroups = svg.selectAll(".category-group")
+        .data(combinedData)
+        .enter().append("g")
+        .attr("class", "category-group")
+        .attr("transform", d => `translate(${x0(d.key)}, 0)`);
+
+    categoryGroups.selectAll(".bar.denied")
+        .data(d => [{ key: d.key, value: d.deniedValue }])
+        .enter().append("rect")
+        .attr("class", "bar denied")
+        .attr("x", d => x1("DENIED"))
+        .attr("y", d => yScale(d.value))
+        .attr("width", x1.bandwidth())
+        .attr("height", d => height - yScale(d.value))
+        .attr("fill", "#B15E6C")
+        .on("mouseover", mouseOver)
+        .on('mousemove', function(event, d) {
+            // Make sure 'd' contains the expected data structure
+            const readableCategory = labelMapping[d.key] || d.key;
+        
+            d3.select('#tooltip')
+                .style('opacity', 1)
+                .html(`There were <b>${d.value}</b> 
+                       <br>reappearance interviews <b>${d.key === "denied" ? "granted" : "denied"}</b> parole 
+                       <br>of people aged <b>${readableCategory}</b>.`)
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 10) + 'px');
+        })
+        .on("mouseout", mouseOut);
+
+    if (includeGranted) {
+        categoryGroups.selectAll(".bar.granted")
+            .data(d => [{ key: d.key, value: d.grantedValue }])
+            .enter().append("rect")
+            .attr("class", "bar granted")
+            .attr("x", d => x1("GRANTED"))
+            .attr("y", d => yScale(d.value))
+            .attr("width", x1.bandwidth())
+            .attr("height", d => height - yScale(d.value))
+            .attr("fill", "#BCD979")
+            .on("mouseover", mouseOver)
+            .on('mousemove', function(event, d) {
+                // Make sure 'd' contains the expected data structure
+                const readableCategory = labelMapping[d.key] || d.key;            
+                d3.select('#tooltip')
+                    .style('opacity', 1)
+                    .html(`There were <b>${d.value}</b>
+                           <br>reappearance interviews <b>${d.key === "denied" ? "denied" : "granted"}</b> parole 
+                           <br>of people aged <b>${readableCategory}</b>.`)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 10) + 'px');
+            })
+            .on("mouseout", mouseOut);;
+    }
+
+    // X Axis
+    svg.selectAll(".x-axis").remove(); // Clear previous axis
+    const xAxis = svg.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x0).tickSize(0))
+
+        xAxis.selectAll(".tick text")
+        .text(d => labelMapping[d] || d)
+        .style("font-size", "12px")
+        .style('text-anchor', 'middle');
+
+    // Optional: Y Axis
+    // svg.selectAll(".y-axis").remove(); // Clear previous axis
+    // svg.append("g")
+    //     .attr("class", "y-axis")
+    //     .call(d3.axisLeft(yScale));
+}
+
+
+// function updateBarChart(attribute, decisionType) {
+//     if (!attribute || attribute === "null") {
+//         svg.selectAll('.bar').remove(); // Remove all bars
+//         svg.select('.x-axis').remove(); // Remove x-axis
+//         return; // Exit the function
+//     }
+
+//     // Filter the interviews based on the decision type and attribute
+//     const filteredInterviews = state.interviews.filter(d =>
+//         d.interview_decision === decisionType && d.parole_board_interview_type === "REAPPEAR"
+//     );
+
+//     // Group the filtered interviews by the specified attribute
+//     const dataGroupedByAttribute = d3.group(filteredInterviews, d => d[attribute]);
+
+//     // Convert the Map to an array and sort by value
+//     const dataGroupedArray = Array.from(dataGroupedByAttribute, ([key, values]) => ({
+//         key: key,
+//         value: values.length
+//     })).sort((a, b) => b.value - a.value);
+
+//     // Define scales
+//     const xScale = d3.scaleBand()
+//         .domain(dataGroupedArray.map(d => d.key))
+//         .range([0, width])
+//         .padding(0.1);
+
+//     const yScale = d3.scaleLinear()
+//         .domain([0, d3.max(dataGroupedArray, d => d.value)])
+//         .range([height, 0]);
+
+//     // Draw or update bars
+//     const bars = svg.selectAll('.bar')
+//         .data(dataGroupedArray, d => d.key);
+
+//         bars.enter()
+//         .append('rect')
+//         .attr('class', d => `bar.${d.key}`)
+//         .attr('x', d => xScale(d.key) + xScale.bandwidth()/4)
+//         .attr('y', d => yScale(d.value))
+//         .attr('width', xScale.bandwidth()/2)
+//         .attr('height', 0)
+//         .on('mouseover', mouseOver)
+//         .on('mousemove', function(event, d) {
+//             const readableCategory = labelMapping[d.key] || d.key; 
+//             d3.select('#tooltip')
+//                 .style('opacity', 1)
+//                 .html(`There were <b>${d.value} (${((d.value / filteredInterviews.length) * 100).toFixed(2)}%)</b> <br>reappearance interviews denied parole <br>of people aged <b>${readableCategory}.</b>`)
+//                 .style('left', (event.pageX + 10) + 'px')
+//                 .style('top', (event.pageY - 10) + 'px');
+//         })
+//         .on('mouseout', function() {
+//             d3.select('#tooltip').style('opacity', 0);
+//         })
+//         .merge(bars)
+//         .transition()
+//         .duration(1000)
+//         .attr('y', d => yScale(d.value))
+//         .attr('height', d => height - yScale(d.value)); 
+
+//     bars.exit().remove();
+
+//     svg.append("g")
+//     .attr("class", "x-axis")
+//     .attr("transform", `translate(0,${height+10})`);
+
+//     // Update the X Axis
+//     svg.select('.x-axis')
+//         .transition()
+//         .duration(1000)
+//         .call(d3.axisBottom(xScale).tickSize(0))
+//         .selectAll(".tick text")
+//         .text(d => labelMapping[d] || d)
+//         .style("font-size", "12px")
+//         .style('text-anchor', 'middle');
+
+//     // svg.select('.y-axis')
+//     //     .transition()
+//     //     .duration(1000)
+//     //     .call(d3.axisLeft(yScale));
+// }
 
 /* INITIALIZING FUNCTION */
 function init() {
@@ -380,6 +619,8 @@ function init() {
         }
     });
 
+    
+
     state.individuals.forEach(d => {
         if (d.prop_sent_served <=1) {
             d.prop_sent_served = d.prop_sent_served * 100;
@@ -406,23 +647,55 @@ function init() {
     whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
     reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
     initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
-
-
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
     state.raceDataInterviews = d3.group(state.interviews, d => d.race__ethnicity);
     state.intTypeData = d3.group(state.interviews, d => d.parole_board_interview_type);
-    state.outcomeData = d3.group(state.interviews, d=>d.interview_decision);
-    state.ageData = d3.group(state.interviews, d=>d.ageGroup);
-    outcomes = Array.from(state.outcomeData.keys());
     races = Array.from(state.raceData.keys());
     intTypes = Array.from(state.intTypeData.keys());
-    ageGroups = Array.from(state.ageData.keys());
     over55 = state.interviews.filter(d=> d.age >= 55);
     under55 = state.interviews.filter(d=>d.age < 55);
     interviewTotals = state.interviews.length;
 
     over55intType = d3.group(over55, d => d.parole_board_interview_type);
 
+    //sort age data
+    state.ageData = d3.group(state.interviews, d=>d.ageGroup);
+    state.ageData = new Map(ageGroupOrder.map(ageGroup => [ageGroup, state.ageData.get(ageGroup) || []]));
+    ageGroups = Array.from(state.ageData.keys());
+
+        // Filter the interviews first
+    const filteredInterviews = state.interviews.filter(d => 
+        d.interview_decision === "DENIED" && d.parole_board_interview_type === "REAPPEAR"
+    );
+
+    // Group the filtered interviews by age group
+    // const interviewsByAgeGroup = filteredInterviews.reduce((acc, interview) => {
+    //     const ageGroup = interview.ageGroup;
+    //     if (!acc[ageGroup]) {
+    //         acc[ageGroup] = []; // Initialize an array if it doesn't exist
+    //     }
+    //     acc[ageGroup].push(interview);
+    //     return acc;
+    // }, {});
+
+    // const interviewsByAgeGroupArray = Object.keys(interviewsByAgeGroup).map(ageGroup => ({
+    //     ageGroup: ageGroup,
+    //     interviews: interviewsByAgeGroup[ageGroup]
+    // }));
+    // interviewsByAgeGroupArray.sort((a, b) => b.interviews.length - a.interviews.length);
+
+
+
+
+    //sort outcome data from most to least
+    state.outcomeData = d3.group(state.interviews, d=>d.interview_decision);
+    let sortedOutcomeDataArray = Array.from(state.outcomeData.entries());
+    sortedOutcomeDataArray.sort((a, b) => b[1].length - a[1].length);
+    state.outcomeData = new Map(sortedOutcomeDataArray);
+    outcomes = Array.from(state.outcomeData.keys());
+
+    console.log("state.ageData", state.ageData);
+    console.log("ageGroups", ageGroups);
 
     //DATA FOR STACKING
     let formattedData = [];
@@ -433,15 +706,11 @@ function init() {
             formattedData[0][outcome] = values.length;
     });
 
-    console.log(formattedData)
 
     let stack = d3.stack()
     .keys(outcomes);
 
     let stackedData = stack(formattedData);
-
-    console.log(state.outcomeData.keys)
-
     
 
 
@@ -529,9 +798,10 @@ function init() {
     let combinedInterviewTypeData = calculateCombinedPercentages(state.interviews, 'parole_board_interview_type', 'interview_decision');
 
     combinedRaceData.sort((a, b) => b.percentOfCategoryDenied - a.percentOfCategoryDenied);
-    combinedAgeData.sort((a, b) => b.percentOfCategoryDenied - a.percentOfCategoryDenied);
+    combinedAgeData.sort((a, b) => ageGroupOrder.indexOf(a.category) - ageGroupOrder.indexOf(b.category));
     combinedInterviewTypeData.sort((a, b) => b.percentOfCategoryDenied - a.percentOfCategoryDenied);
 
+    console.log("here",combinedAgeData)
 
     state.combinedData = {
         race: combinedRaceData,
@@ -586,39 +856,39 @@ function init() {
     }
     
 
-    function processDataForButterflyChart2(data) {
-        const ageGroups = {
-            'UNDER55': { granted: 0, denied: 0, total: 0 },
-            '55ANDUP': { granted: 0, denied: 0, total: 0 }
-        };
+    // function processDataForButterflyChart2(data) {
+    //     const ageGroups = {
+    //         'UNDER55': { granted: 0, denied: 0, total: 0 },
+    //         '55ANDUP': { granted: 0, denied: 0, total: 0 }
+    //     };
     
-        data.forEach(d => {
-            const ageGroup = d.age < 55 ? 'UNDER55' : '55ANDUP';
+    //     data.forEach(d => {
+    //         const ageGroup = d.age < 55 ? 'UNDER55' : '55ANDUP';
     
-            ageGroups[ageGroup].total += 1;
+    //         ageGroups[ageGroup].total += 1;
     
-            if (d.interview_decision === 'GRANTED') {
-                ageGroups[ageGroup].granted += 1;
-            } else if (d.interview_decision === 'DENIED') {
-                ageGroups[ageGroup].denied += 1;
-            }
-        });
+    //         if (d.interview_decision === 'GRANTED') {
+    //             ageGroups[ageGroup].granted += 1;
+    //         } else if (d.interview_decision === 'DENIED') {
+    //             ageGroups[ageGroup].denied += 1;
+    //         }
+    //     });
     
-        Object.keys(ageGroups).forEach(group => {
-            if (ageGroups[group].total > 0) {
-                ageGroups[group].percentGranted = (ageGroups[group].granted / ageGroups[group].total) * 100;
-                ageGroups[group].percentDenied = (ageGroups[group].denied / ageGroups[group].total) * 100;
-            } else {
-                ageGroups[group].percentGranted = 0;
-                ageGroups[group].percentDenied = 0;
-            }
-        });
+    //     Object.keys(ageGroups).forEach(group => {
+    //         if (ageGroups[group].total > 0) {
+    //             ageGroups[group].percentGranted = (ageGroups[group].granted / ageGroups[group].total) * 100;
+    //             ageGroups[group].percentDenied = (ageGroups[group].denied / ageGroups[group].total) * 100;
+    //         } else {
+    //             ageGroups[group].percentGranted = 0;
+    //             ageGroups[group].percentDenied = 0;
+    //         }
+    //     });
     
-        return ageGroups;
-    }
+    //     return ageGroups;
+    // }
     
-    const processedData = processDataForButterflyChart(state.individuals);
-    console.log(processedData);
+    // const processedData = processDataForButterflyChart(state.individuals);
+    // console.log(processedData);
     
 
     // CREATE SCALES
@@ -697,8 +967,8 @@ function init() {
         .attr("width", 0)
         .attr("height", yScale.bandwidth())
         .attr("fill", "black")
-        .attr("stroke", "none")
-        .attr("stroke-width", 0)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
         // .on("mouseover", function(event, d) {
         //     if (d3.select(this).classed("animation-complete")) {
         //         tooltip.style("display", "block")
@@ -714,6 +984,7 @@ function init() {
                 were given a <br>decision of <b>${d.key}</b>`;
                 
             tooltip
+                .style("opacity", 1)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 10) + "px")
                 .html(tooltipContent);
@@ -792,16 +1063,54 @@ function init() {
     // .attr("visibility", "hidden");
 
     //AXIS FOR VERTICAL BAR GRAPH
-    axisGroup = svg.append("g")
-    .attr("class", "outcomeBarsAxis")
-    .attr("visibility", "hidden")
-    .call(outcomexAxis)
-    .selectAll(".tick text")
-    .attr("transform", d => `translate(${(outcomexScale.bandwidth()/2)-20}, 0) rotate(-65)`)
-    .style("text-anchor", "end")
-    .style("font-size", "14px")
-    .attr("dx", "-.8em")
-    .attr("dy", ".15em");
+    // axisGroup = svg.append("g")
+    // .attr("class", "outcomeBarsAxis")
+    // .attr("visibility", "hidden")
+    // .call(outcomexAxis)
+    // .selectAll(".tick text")
+    // // .attr("transform", d => `translate(${(outcomexScale.bandwidth()/2)-20}, 0) rotate(-65)`)
+    // .attr("transform", d => `translate(${(outcomexScale.bandwidth()/2)-m.right}, 0)`)
+    // .style("text-anchor", "end")
+    // .style("font-size", "14px")
+    // // .attr("dx", "-.8em")
+    // // .attr("dy", ".15em");
+
+    // axisGroup = svg.append("g")
+    // .attr("class", "outcomeBarsAxis")
+    // .attr("visibility", "hidden")
+    // .call(outcomexAxis)
+    // .selectAll(".tick text")
+    // .attr("transform", d => `translate(${outcomexScale(d) + outcomexScale.bandwidth()/4}, 0)`) // Center align
+    // .style("text-anchor", "middle") // Set text-anchor to middle
+    // .style("font-size", "14px");
+
+    svg.selectAll(".outcome-label")
+        .data(outcomes)
+        .enter()
+        .append("text")
+        .text(d => d)
+        .attr("x", d => outcomexScale(d) + (outcomexScale.bandwidth()/2)+50)
+        .attr("y", height-m.bottom)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .attr("visibility", "hidden")
+        .attr("class", d => `outcome-label ${d}`);
+
+    const legend = svg.selectAll(".legend")
+        .data(outcomes)
+        .enter()
+        .append("g")
+        .attr("class", d => `legend ${d}`)  // Adding specific class based on outcome
+        .attr("transform", (d, i) => `translate(0, ${i * 20})`)
+        .attr("visibility", "hidden"); // Initially hidden
+
+        legend.append("rect")
+        .attr("x", width - 200) // Adjust positioning as needed
+        .attr("width", 18)
+        .attr("height", 18)
+        .attr("fill", d => decColorScale(d));
+
+
 
     let ticks = d3.selectAll(".tick text");
 
@@ -810,40 +1119,17 @@ function init() {
         else if(d === 'DENIED'){ return "denied-tick"; }
     });
 
-    // WHOLE CIRCLES 
-    deniedCircle = svg.append("circle")
-    .attr("cx", outcomexScale('DENIED') + outcomexScale.bandwidth() / 2)
-    .attr("cy", circleVerticalCenter)
-    .attr("r", initialCircleRadius)
-    .attr("fill","#B15E6C") 
-    .attr("visibility", "hidden")
-    .classed("denied-circle", true);
-
-    grantedCircle = svg.append("circle")
-    .attr("cx", outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2)
-    .attr("cy", circleVerticalCenter)
-    .attr("r", initialCircleRadius)
-    .attr("fill", "#BCD979")
-    .attr("visibility", "hidden")
-    .classed("granted-circle", true);
-
-    deniedLabel = svg.append("text")
-    .text("DENIED")
-    .attr("x", rightCenterX)
-    .attr("y", svgCenterY + finalRadius + 30)
-    .attr("text-anchor", "middle")
-    .style("font-size", "14px")
-    .attr("visibility", "hidden")
-    .classed("circle-label", true);
-
-    grantedLabel = svg.append("text")
-    .text("GRANTED")
-    .attr("x", leftCenterX)
-    .attr("y", svgCenterY + finalRadius + 30)
-    .attr("text-anchor", "middle")
-    .style("font-size", "14px")
-    .attr("visibility", "hidden")
-    .classed("circle-label", true);
+    svg.selectAll(".outcome-circle")
+        .data(outcomes)
+        .enter()
+        .append("circle")
+        .attr("cx", d => outcomexScale(d) + outcomexScale.bandwidth() / 2)
+        .attr("cy", circleVerticalCenter)
+        .attr("r", initialCircleRadius)
+        .attr("fill", d => decColorScale(d))
+        .attr("visibility", "hidden")
+        .classed("outcome-circle", true)
+        .attr("class", d => `outcome-circle ${d}`); // Adding specific class
 
 
 // RACES PIE CHART
@@ -871,7 +1157,7 @@ function init() {
     .attr('class', d => `denied-slice ${d.data.race.replace(/\s+/g, '-')}`)
     .attr('d', arc)
     .attr('fill', d => raceColorScale(d.data.race))
-    .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
+    .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
     .attr("visibility", "hidden")
     .on("mouseover", mouseOver)
     .on("mousemove", function(event, d) {
@@ -879,6 +1165,7 @@ function init() {
         const readableCategory = labelMapping[d.data.race] || d.data.race; 
         let tooltipContent = `<b>${percent}%</b> of the interviews <br> denied parole were <b>${readableCategory}</b>`;
         tooltip
+            .style("opacity", 1)
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 10) + "px")
             .html(tooltipContent);
@@ -893,7 +1180,7 @@ function init() {
     .attr('class', d => `granted-slice ${d.data.race.replace(/\s+/g, '-')}`)
     .attr('d', arc)
     .attr('fill', d => raceColorScale(d.data.race))
-    .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
+    .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
     .attr("visibility", "hidden")
     .on("mouseover", mouseOver)
     .on("mousemove", function(event, d) {
@@ -901,6 +1188,7 @@ function init() {
         const readableCategory = labelMapping[d.data.race] || d.data.race; 
         let tooltipContent = `<b>${percent}%</b> of the interviews <br> granted parole were <b>${readableCategory}</b>`;
         tooltip
+            .style("opacity", 1)
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 10) + "px")
             .html(tooltipContent);
@@ -915,7 +1203,7 @@ function init() {
     .attr('class', d => `pie-text-denied ${d.data.race.replace(/\s+/g, '-')}`)
     .attr('transform', d => {
         const [x, y] = arc.centroid(d);
-        return `translate(${x + rightCenterX}, ${y + svgCenterY})`;
+        return `translate(${x + leftCenterX}, ${y + svgCenterY})`;
     })
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
@@ -929,7 +1217,7 @@ function init() {
     .attr('class', d => `pie-text-granted ${d.data.race.replace(/\s+/g, '-')}`)
     .attr('transform', d => {
         const [x, y] = arc.centroid(d);
-        return `translate(${x + leftCenterX}, ${y + svgCenterY})`; 
+        return `translate(${x + rightCenterX}, ${y + svgCenterY})`; 
     })
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
@@ -1034,6 +1322,7 @@ function init() {
         let percent = calculatePercent(d.data.value, initialTotal);
         let tooltipContent = `<b>${percent}%</b> of initial interviews <br> were given a(n) <br><b>${d.data.outcome}</b> decision`;
         tooltip
+            .style("opacity", 1)
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 10) + "px")
             .html(tooltipContent);
@@ -1056,6 +1345,7 @@ function init() {
         let percent = calculatePercent(d.data.value, reappearTotal);
         let tooltipContent = `<b>${percent}%</b> of reappearance interviews <br> were given a(n) <br><b>${d.data.outcome}</b> decision`;
         tooltip
+            .style("opacity", 1)
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 10) + "px")
             .html(tooltipContent);
@@ -1228,11 +1518,11 @@ function init() {
 
     butterflyxScaleLeft = d3.scaleLinear()
     .domain([0, 50])
-    .range([width / 2, m.left]);
+    .range([(width / 2), m.left]);
 
     butterflyxScaleRight = d3.scaleLinear()
     .domain([0, 50])
-    .range([width / 2, width - m.right]);
+    .range([(width / 2), (width - m.right)]);
 
     butterflyxAxisLeft = svg.append("g")
     .attr("transform", `translate(0, ${m.top})`)
@@ -1261,31 +1551,10 @@ function init() {
 
     combinedRaceData.forEach(d => {
         svg.append("rect")
-            .attr('class', `race-butterfly-granted ${d.category}`)
-            .attr("x", butterflyxScaleLeft(d.percentOfCategoryGranted))
-            .attr("y", raceButterflyyScale(d.category))
-            .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryGranted))
-            .attr("height", raceButterflyyScale.bandwidth())
-            // .attr("fill", d => raceColorScale(d.category))
-            .attr("fill", "#BCD979")
-            .attr("visibility", "hidden")
-            .on("mouseover", mouseOver)
-            .on("mousemove", function(event) {
-                const readableCategory = labelMapping[d.category] || d.category; 
-                tooltip
-                    .html(`<b>${readableCategory}</b> <br> identifying people were <br>
-                        <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
-                        <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 10) + "px");
-            })
-            .on("mouseout", mouseOut);
-
-        svg.append("rect")
             .attr('class', `race-butterfly-denied ${d.category}`)
-            .attr("x", width / 2)
+            .attr("x", butterflyxScaleLeft(d.percentOfCategoryDenied))
             .attr("y", raceButterflyyScale(d.category))
-            .attr("width", butterflyxScaleRight(d.percentOfCategoryDenied) - width / 2) 
+            .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryDenied))
             .attr("height", raceButterflyyScale.bandwidth())
             // .attr("fill", d => raceColorScale(d.category))
             .attr("fill", "#B15E6C")
@@ -1294,9 +1563,32 @@ function init() {
             .on("mousemove", function(event) {
                 const readableCategory = labelMapping[d.category] || d.category; 
                 tooltip
-                .html(`<b>${readableCategory}</b> <br> identifying people were <br>
+                .style("opacity", 1)
+                .html(` Interviews of <br><b>${readableCategory}</b> <br> identifying people were <br>
                     GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% and
                     <br> <b>DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%</b>`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            })
+            .on("mouseout", mouseOut);
+
+        svg.append("rect")
+            .attr('class', `race-butterfly-granted ${d.category}`)
+            .attr("x", width / 2)
+            .attr("y", raceButterflyyScale(d.category))
+            .attr("width", butterflyxScaleRight(d.percentOfCategoryGranted) - width / 2) 
+            .attr("height", raceButterflyyScale.bandwidth())
+            // .attr("fill", d => raceColorScale(d.category))
+            .attr("fill", "#BCD979")
+            .attr("visibility", "hidden")
+            .on("mouseover", mouseOver)
+            .on("mousemove", function(event) {
+                const readableCategory = labelMapping[d.category] || d.category; 
+                tooltip
+                    .style("opacity", 1)
+                    .html(`Interviews of<br> <b>${readableCategory}</b> <br> identifying people were <br>
+                        <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
+                        <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 10) + "px");
             })
@@ -1304,15 +1596,14 @@ function init() {
     });
 
     raceButterflyyAxis = svg.append("g")
-        // .attr("transform", `translate(${width / 2}, 0)`)
-        .attr("transform", `translate(${m.left}, 0)`)
+       . attr("transform", `translate(${width-m.right}, 0)`)
         .attr("class", "raceButterflyyAxis")
         .attr("visibility", "hidden")
         .call(d3.axisRight(raceButterflyyScale).tickSize(0))
         .selectAll(".tick text")
         .text(d => labelMapping[d] || d)
         .style("font-size", "12px")
-        .attr("text-anchor", "start");
+        .attr("text-anchor", "end");
 
     raceButterflyyAxis.each(function() {
             wrap(d3.select(this), 150); 
@@ -1323,23 +1614,23 @@ function init() {
         if (d.category === 'BLACK' || d.category === 'WHITE') {
             // Add text for granted percentage
             svg.append("text")
-                .attr('class', `race-butterfly-percentage-granted ${d.category}`)
-                .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryGranted)) / 2)
+                .attr('class', `race-butterfly-percentage-denied ${d.category}`)
+                .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryDenied)) / 2)
                 .attr("y", raceButterflyyScale(d.category) + raceButterflyyScale.bandwidth() / 2)
                 .attr("text-anchor", "middle")
                 .attr("dy", "0.35em")
-                .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
+                .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
                 .attr("fill", "black")
                 .attr("visibility", "hidden");
     
             // Add text for denied percentage
             svg.append("text")
-                .attr('class', `race-butterfly-percentage-denied ${d.category}`)
-                .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryDenied)) / 2)
+                .attr('class', `race-butterfly-percentage-granted ${d.category}`)
+                .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryGranted)) / 2)
                 .attr("y", raceButterflyyScale(d.category) + raceButterflyyScale.bandwidth() / 2)
                 .attr("text-anchor", "middle")
                 .attr("dy", "0.35em")
-                .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
+                .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
                 .attr("fill", "black")
                 .attr("visibility", "hidden");
         }
@@ -1356,41 +1647,43 @@ function init() {
 
     combinedAgeData.forEach(d => {
         svg.append("rect")
-            .attr('class', `age-butterfly-granted A${d.category}`)
-            .attr("x", butterflyxScaleLeft(d.percentOfCategoryGranted))
-            .attr("y", ageButterflyyScale(d.category))
-            .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryGranted))
-            .attr("height", ageButterflyyScale.bandwidth())
-            .attr("fill", "#BCD979")
-            .attr("visibility", "hidden")
-            .on("mouseover", mouseOver)
-            .on("mousemove", function(event) {
-                const readableCategory = labelMapping[d.category] || d.category; 
-                tooltip
-                    .html(`People aged <b>${readableCategory}</b> <br> were <br>
-                        <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
-                        <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 10) + "px");
-            })
-            .on("mouseout", mouseOut);
-
-        svg.append("rect")
             .attr('class', `age-butterfly-denied A${d.category}`)
-            .attr("x", width / 2)
+            .attr("x", butterflyxScaleLeft(d.percentOfCategoryDenied))
             .attr("y", ageButterflyyScale(d.category))
-            .attr("width", butterflyxScaleRight(d.percentOfCategoryDenied) - width / 2) 
+            .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryDenied))
             .attr("height", ageButterflyyScale.bandwidth())
-            // .attr("fill", d => raceColorScale(d.category))
             .attr("fill", "#B15E6C")
             .attr("visibility", "hidden")
             .on("mouseover", mouseOver)
             .on("mousemove", function(event) {
                 const readableCategory = labelMapping[d.category] || d.category; 
                 tooltip
-                .html(`People aged <b>${readableCategory}</b> <br> were <br>
+                .style("opacity", 1)    
+                .html(`Interviews of people <br>aged <b>${readableCategory}</b> were <br>
                     GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% and
                     <br> <b>DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%</b>`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            })
+            .on("mouseout", mouseOut);
+
+        svg.append("rect")
+            .attr('class', `age-butterfly-granted A${d.category}`)
+            .attr("x", width / 2)
+            .attr("y", ageButterflyyScale(d.category))
+            .attr("width", butterflyxScaleRight(d.percentOfCategoryGranted) - width / 2) 
+            .attr("height", ageButterflyyScale.bandwidth())
+            // .attr("fill", d => raceColorScale(d.category))
+            .attr("fill", "#BCD979")
+            .attr("visibility", "hidden")
+            .on("mouseover", mouseOver)
+            .on("mousemove", function(event) {
+                const readableCategory = labelMapping[d.category] || d.category; 
+                tooltip
+                    .style("opacity", 1)
+                    .html(`Interviews of people <br>aged <b>${readableCategory}</b> were <br>
+                        <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
+                        <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 10) + "px");
             })
@@ -1401,36 +1694,36 @@ function init() {
     // Adding Y-axis in the middle
     ageButterflyyAxis = svg.append("g")
         // .attr("transform", `translate(${width / 2}, 0)`)
-        .attr("transform", `translate(${m.left}, 0)`)
+        .attr("transform", `translate(${width-m.right}, 0)`)
         .attr("class", "ageButterflyyAxis")
         .attr("visibility", "hidden")
-        .call(d3.axisLeft(ageButterflyyScale).tickSize(0))
+        .call(d3.axisRight(ageButterflyyScale).tickSize(0))
         .selectAll(".tick text")
         .text(d => labelMapping[d] || d)
         .style("font-size", "12px")
-        .attr("text-anchor", "start");
+        .attr("text-anchor", "end");
 
 
     //TEXT ELEMENT FOR HIGHLIGHTING
     combinedAgeData.forEach(d => {
             svg.append("text")
-                .attr('class', `age-butterfly-percentage-granted A${d.category}`)
-                .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryGranted)) / 2)
+                .attr('class', `age-butterfly-percentage-denied A${d.category}`)
+                .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryDenied)) / 2)
                 .attr("y", ageButterflyyScale(d.category) + ageButterflyyScale.bandwidth() / 2)
                 .attr("text-anchor", "middle")
                 .attr("dy", "0.35em")
-                .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
+                .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
                 .attr("fill", "black")
                 .attr("visibility", "hidden");
     
             // Add text for denied percentage
             svg.append("text")
-                .attr('class', `age-butterfly-percentage-denied A${d.category}`)
-                .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryDenied)) / 2)
+                .attr('class', `age-butterfly-percentage-granted A${d.category}`)
+                .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryGranted)) / 2)
                 .attr("y", ageButterflyyScale(d.category) + ageButterflyyScale.bandwidth() / 2)
                 .attr("text-anchor", "middle")
                 .attr("dy", "0.35em")
-                .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
+                .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
                 .attr("fill", "black")
                 .attr("visibility", "hidden");
 
@@ -1439,92 +1732,92 @@ function init() {
 
 // INTERVIEW TYPE BUTTERFLY CHART
 
-intButterflyyScale = d3.scaleBand()
-.domain(combinedInterviewTypeData.map(d => d.category))
-.range([m.top, height - m.bottom])
-.padding(0.1);
+// intButterflyyScale = d3.scaleBand()
+// .domain(combinedInterviewTypeData.map(d => d.category))
+// .range([m.top, height - m.bottom])
+// .padding(0.1);
 
-combinedInterviewTypeData.forEach(d => {
-svg.append("rect")
-    .attr('class', `int-butterfly-granted A${d.category}`)
-    .attr("x", butterflyxScaleLeft(d.percentOfCategoryGranted))
-    .attr("y", intButterflyyScale(d.category))
-    .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryGranted))
-    .attr("height", intButterflyyScale.bandwidth())
-    .attr("fill", "#BCD979")
-    .attr("visibility", "hidden")
-    .on("mouseover", mouseOver)
-    .on("mousemove", function(event) {
-        const readableCategory = labelMapping[d.category] || d.category; 
-        tooltip
-            .html(`People aged <b>${readableCategory}</b> <br> were <br>
-                <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
-                <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px");
-    })
-    .on("mouseout", mouseOut);
+// combinedInterviewTypeData.forEach(d => {
+// svg.append("rect")
+//     .attr('class', `int-butterfly-granted A${d.category}`)
+//     .attr("x", butterflyxScaleLeft(d.percentOfCategoryGranted))
+//     .attr("y", intButterflyyScale(d.category))
+//     .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryGranted))
+//     .attr("height", intButterflyyScale.bandwidth())
+//     .attr("fill", "#BCD979")
+//     .attr("visibility", "hidden")
+//     .on("mouseover", mouseOver)
+//     .on("mousemove", function(event) {
+//         const readableCategory = labelMapping[d.category] || d.category; 
+//         tooltip
+//             .html(`People aged <b>${readableCategory}</b> <br> were <br>
+//                 <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
+//                 <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
+//             .style("left", (event.pageX + 10) + "px")
+//             .style("top", (event.pageY - 10) + "px");
+//     })
+//     .on("mouseout", mouseOut);
 
-svg.append("rect")
-    .attr('class', `int-butterfly-denied A${d.category}`)
-    .attr("x", width / 2)
-    .attr("y", intButterflyyScale(d.category))
-    .attr("width", butterflyxScaleRight(d.percentOfCategoryDenied) - width / 2) 
-    .attr("height", intButterflyyScale.bandwidth())
-    // .attr("fill", d => raceColorScale(d.category))
-    .attr("fill", "#B15E6C")
-    .attr("visibility", "hidden")
-    .on("mouseover", mouseOver)
-    .on("mousemove", function(event) {
-        const readableCategory = labelMapping[d.category] || d.category; 
-        tooltip
-        .html(`People aged <b>${readableCategory}</b> <br> were <br>
-            GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% and
-            <br> <b>DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%</b>`)
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px");
-    })
-    .on("mouseout", mouseOut);
-});
-
-
-// Adding Y-axis in the middle
-intButterflyyAxis = svg.append("g")
-// .attr("transform", `translate(${width / 2}, 0)`)
-.attr("transform", `translate(${m.left}, 0)`)
-.attr("class", "intButterflyyAxis")
-.attr("visibility", "hidden")
-.call(d3.axisLeft(intButterflyyScale).tickSize(0))
-.selectAll(".tick text")
-.text(d => labelMapping[d] || d)
-.style("font-size", "12px")
-.attr("text-anchor", "start");
+// svg.append("rect")
+//     .attr('class', `int-butterfly-denied A${d.category}`)
+//     .attr("x", width / 2)
+//     .attr("y", intButterflyyScale(d.category))
+//     .attr("width", butterflyxScaleRight(d.percentOfCategoryDenied) - width / 2) 
+//     .attr("height", intButterflyyScale.bandwidth())
+//     // .attr("fill", d => raceColorScale(d.category))
+//     .attr("fill", "#B15E6C")
+//     .attr("visibility", "hidden")
+//     .on("mouseover", mouseOver)
+//     .on("mousemove", function(event) {
+//         const readableCategory = labelMapping[d.category] || d.category; 
+//         tooltip
+//         .html(`People aged <b>${readableCategory}</b> <br> were <br>
+//             GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% and
+//             <br> <b>DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%</b>`)
+//             .style("left", (event.pageX + 10) + "px")
+//             .style("top", (event.pageY - 10) + "px");
+//     })
+//     .on("mouseout", mouseOut);
+// });
 
 
-//TEXT ELEMENT FOR HIGHLIGHTING
-combinedInterviewTypeData.forEach(d => {
-    svg.append("text")
-        .attr('class', `int-butterfly-percentage-granted A${d.category}`)
-        .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryGranted)) / 2)
-        .attr("y", intButterflyyScale(d.category) + intButterflyyScale.bandwidth() / 2)
-        .attr("text-anchor", "middle")
-        .attr("dy", "0.35em")
-        .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
-        .attr("fill", "black")
-        .attr("visibility", "hidden");
+// // Adding Y-axis in the middle
+// intButterflyyAxis = svg.append("g")
+// // .attr("transform", `translate(${width / 2}, 0)`)
+// .attr("transform", `translate(${m.left}, 0)`)
+// .attr("class", "intButterflyyAxis")
+// .attr("visibility", "hidden")
+// .call(d3.axisLeft(intButterflyyScale).tickSize(0))
+// .selectAll(".tick text")
+// .text(d => labelMapping[d] || d)
+// .style("font-size", "12px")
+// .attr("text-anchor", "start");
 
-    // Add text for denied percentage
-    svg.append("text")
-        .attr('class', `int-butterfly-percentage-denied A${d.category}`)
-        .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryDenied)) / 2)
-        .attr("y", intButterflyyScale(d.category) + intButterflyyScale.bandwidth() / 2)
-        .attr("text-anchor", "middle")
-        .attr("dy", "0.35em")
-        .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
-        .attr("fill", "black")
-        .attr("visibility", "hidden");
 
-});
+// //TEXT ELEMENT FOR HIGHLIGHTING
+// combinedInterviewTypeData.forEach(d => {
+//     svg.append("text")
+//         .attr('class', `int-butterfly-percentage-granted A${d.category}`)
+//         .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryGranted)) / 2)
+//         .attr("y", intButterflyyScale(d.category) + intButterflyyScale.bandwidth() / 2)
+//         .attr("text-anchor", "middle")
+//         .attr("dy", "0.35em")
+//         .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
+//         .attr("fill", "black")
+//         .attr("visibility", "hidden");
+
+//     // Add text for denied percentage
+//     svg.append("text")
+//         .attr('class', `int-butterfly-percentage-denied A${d.category}`)
+//         .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryDenied)) / 2)
+//         .attr("y", intButterflyyScale(d.category) + intButterflyyScale.bandwidth() / 2)
+//         .attr("text-anchor", "middle")
+//         .attr("dy", "0.35em")
+//         .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
+//         .attr("fill", "black")
+//         .attr("visibility", "hidden");
+
+// });
         
 
 
@@ -1565,6 +1858,7 @@ combinedInterviewTypeData.forEach(d => {
         .on("mouseover", mouseOver)
         .on("mousemove", function(event, d) {
             tooltip
+                .style("opacity", 1)
                 .html(`${d[0]} interviews <br>make up ${(d[1] * 100).toFixed(2)}% <br>of the total interviews`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 10) + "px");
@@ -1575,13 +1869,10 @@ combinedInterviewTypeData.forEach(d => {
     svg.selectAll(".bubble-label")
     .data([...interviewTypeProportions.entries()])
     .enter().append("text")
-    .attr("x", (d, i) => {
-        let radius = radiusScale(d[1]);
-        return svgCenterX + (radius + 200) * Math.cos(2 * Math.PI * i / interviewTypeProportions.size);
-    })
+    .attr("x", (d, i) => svgCenterX + spreadRadius * Math.cos(2 * Math.PI * i / interviewTypeProportions.size))
     .attr("y", (d, i) => {
         let radius = radiusScale(d[1]);
-        return svgCenterY + (radius + 200) * Math.sin(2 * Math.PI * i / interviewTypeProportions.size);
+        return svgCenterY + spreadRadius * Math.sin(2 * Math.PI * i / interviewTypeProportions.size) + radius + 25;
     })
     .attr("class", d => `bubble-label ${d[0]}`)
     .text(d => d[0])
@@ -1590,17 +1881,44 @@ combinedInterviewTypeData.forEach(d => {
 
 
 //KERNEL DENSITY
-kdeChartContainer = svg.append("g")
-    .attr("class", "kdeChartContainer")
+    kdeChartContainer = svg.append("g")
+        .attr("class", "kdeChartContainer")
 
-kdeChartContainer.append("g")
-    .attr("class", "x-axis")
-    .attr("transform", "translate(0," + height + ")");
+    kdeChartContainer.append("g")
+        .attr("class", "kde-x-axis")
+        .attr("transform", "translate(0," + height + ")");
 
-kdeChartContainer.append("g")
-    .attr("class", "y-axis");
+    kdeChartContainer.append("g")
+        .attr("class", "y-axis");
+
+//REAPPEAR DENIED AGE BAR CHART
 
 
+
+
+// Example call to the function
+// updateBarChart('ageGroup');
+
+    // const ageGroupxScale = d3.scaleBand()
+    //     .domain(interviewsByAgeGroupArray.map(d => d.ageGroup))
+    //     .range([0, width])
+    //     .padding(0.1);
+
+    // const ageGroupyScale = d3.scaleLinear()
+    //     .domain([0, d3.max(interviewsByAgeGroupArray, d => d.interviews.length)])
+    //     .range([height, 0]); // Invert range for y-axis
+
+    // // Draw the bars
+    // svg.selectAll(".bar")
+    //     .data(interviewsByAgeGroupArray)
+    //     .enter()
+    //     .append("rect")
+    //     .attr("class", "bar")
+    //     .attr("x", d => ageGroupxScale(d.ageGroup)) // Position bars using the x-scale
+    //     .attr("y", d => ageGroupyScale(d.interviews.length)) // Position bars using the y-scale
+    //     .attr("width", ageGroupxScale.bandwidth()) // Set bar width
+    //     .attr("height", d => height - ageGroupyScale(d.interviews.length)) // Set bar height
+    //     .attr("fill", "#69b3a2"); // Set bar color (change as needed)
 
     draw();
 }
@@ -1618,6 +1936,17 @@ function draw() {
                 updateKDEPlot(state.btnFilter);
             });
 
+    let buttons = document.querySelectorAll('.button-38');
+
+    buttons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            buttons.forEach(function(btn) {
+                btn.classList.remove('button-38-active');
+            });
+            button.classList.add('button-38-active');
+        });
+    });
+
     ScrollTrigger.defaults({scroller: ".content-container" });
     ScrollTrigger.defaults({toggleActions: 'play none none reverse'})
 
@@ -1625,7 +1954,7 @@ function draw() {
         scrollTrigger: {
             trigger: "#section1",
             start: "top center", 
-            end: "center center", 
+            end: "center center",
         },
     });
 
@@ -1641,7 +1970,7 @@ function draw() {
             width: segmentWidth,
             duration: 1.5,
             ease: "none",
-        }, `+=${i * 0.02}`);
+        }, `+=${i * 0.02}`)
     },);
 
     tl1
@@ -1675,9 +2004,6 @@ function draw() {
         duration: 1,
         ease: "power1.Out"
     }, "section1MoveUp") 
-
-    // Add animations for bar2 and section1_1 p
-    tl1
     .to(".bar2", {
         visibility: "visible", 
         attr: { y: yScale('Unique Persons') },
@@ -1690,10 +2016,6 @@ function draw() {
         duration: 1,
         ease: "power1.Out"
     }, "section1MoveUp")
-
-
-    // Add animations for bar3 and section1_2 p
-    tl1
     .to("#section1_3", {
         opacity: 1, 
         duration: 1
@@ -1711,7 +2033,10 @@ function draw() {
             trigger: "#section2",
             start: "top center",
             end: "center center",
-            scrub: 1
+            scrub: 1,
+            onEnter: () => {
+                tl1.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
 
@@ -1723,14 +2048,17 @@ function draw() {
         stagger: 0.1
     })
 
-    gsap.set(".outcomeBarsAxis", { x: "-100%" });
+    // gsap.set(".outcomeBarsAxis", { x: "-100%" });
 
     const verticalBarTimeline = gsap.timeline({
         scrollTrigger: {
             trigger: "#section2",
             start: "top center",
             end: "center center",
-            scrub: 1
+            scrub: 1,
+            onEnter: () => {
+                tlFlyOut.progress(1).pause(); // Complete the animation, then pause
+            },
         },
     });
 
@@ -1740,7 +2068,9 @@ function draw() {
         .to(`.bar1-${outcome}`, {
             height: height - m.bottom - outcomeyScale(state.outcomeData.get(outcome).length),
             y: outcomeyScale(state.outcomeData.get(outcome).length) - m.bottom,
-            attr: {x: outcomexScale(outcome)+outcomexScale.bandwidth()/2},
+            attr: {
+                x: outcomexScale(outcome)+outcomexScale.bandwidth()/2,
+                stroke: "none"},
             width: outcomexScale.bandwidth()/2,
             fill: barColors[i % barColors.length],
             duration: 2,
@@ -1751,15 +2081,19 @@ function draw() {
     const axisYPosition = d3.max(outcomes, outcome => outcomeyScale(state.outcomeData.get(outcome).length));
     
     verticalBarTimeline
-    .to(".outcomeBarsAxis", {
-        attr: { transform: `translate(0, ${axisYPosition})` },
-        duration: 2,
-        ease: "power1.inOut",
-    }, "<")
-    .to(".outcomeBarsAxis", {
+    .to(".outcome-label", {
         visibility: "visible",
         ease: "power1.inOut"
-    }, ">");
+    })
+    // .to(".outcomeBarsAxis", {
+    //     attr: { transform: `translate(0, ${axisYPosition})` },
+    //     duration: 2,
+    //     ease: "power1.inOut",
+    // }, "<")
+    // .to(".outcomeBarsAxis", {
+    //     visibility: "visible",
+    //     ease: "power1.inOut"
+    // }, ">");
 
     // addBarCounts(); 
     // verticalBarTimeline.to('.bar-count', {
@@ -1774,53 +2108,51 @@ function draw() {
             trigger: "#section3",
             start: "top center",
             end: "center center",
-            scrub: 1
+            scrub: 1,
+            onEnter: () => {
+                verticalBarTimeline.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
-
-    console.log(state.individuals)
-
-    // moveBarsTimeline.to(".bar-count", {
-    //     visibility: "hidden",
-    //     ease: "none"
-    // });
     
-    moveBarsTimeline.to('.bar1-OTHER, .bar1-POSTPONED', {
+    moveBarsTimeline
+    .to('.bar1-OTHER, .bar1-POSTPONED', {
         y: "-=300",
         visibility: "hidden",
         duration: 3,
         ease: 'power1.inOut'
     }, "<")
-    .to('.outcomeBarsAxis', {
+    .to('.outcome-label.POSTPONED, .outcome-label.OTHER', {
         visibility: "hidden",
-        duration: 3,
+        opacity: 0,
+        duration: 1,
         ease: 'power1.inOut'
-    }, "<")
+    }, 0)
     .to('.bar1-GRANTED, .bar1-DENIED', {
         duration: 3,
         rx: "50%",
         ry: "50%",
         ease: 'power1.inOut'
     }, ">")
-    .to('.denied-circle, .granted-circle', {
+    .to('.outcome-circle.DENIED, .outcome-circle.GRANTED', {
         visibility: "visible",
         duration: 3,
         attr: { r: circleRadius },
         ease: 'power1.inOut'
     }, ">")
-    .to('.denied-circle', {
+    .to('.outcome-circle.DENIED', {
         duration: 3,
         attr: { 
-            cx: rightCenterX,
+            cx: leftCenterX,
             cy: svgCenterY, 
             r: finalRadius 
         },
         ease: 'power1.inOut'
     }, "<")
-    .to('.granted-circle', {
+    .to('.outcome-circle.GRANTED', {
         duration: 3,
         attr: { 
-            cx: leftCenterX,
+            cx: rightCenterX,
             cy: svgCenterY, 
             r: finalRadius 
         },
@@ -1832,39 +2164,23 @@ function draw() {
         height: 0, 
         visibility: "hidden",
         ease: 'power1.inOut'
-    }, "<");
-
-
-//     let finalY = svgCenterY + finalRadius + 30; 
-
-// moveBarsTimeline
-//     .to('.granted-tick', {
-//         style: {
-//             transform: `translate(${leftCenterX}, ${finalY})`
-//         },
-//         duration: 3,
-//         visibility: "visible",
-//         ease: 'power1.inOut'
-//     }, "<")
-//     .to('.denied-tick', {
-//         style: {
-//             transform: `translate(${rightCenterX}, ${finalY})`
-//         },
-//         duration: 3,
-//         visibility: "visible",
-//         ease: 'power1.inOut'
-//     }, "<");
-
-
-
-
-
-    moveBarsTimeline.to('.circle-label', {
+    }, "<")
+    .to('.outcome-label.DENIED', {
+        attr: {
+            x: leftCenterX
+        },
         visibility: "visible",
-        delay: 1,
         duration: 2,
         ease: 'power1.inOut'
-    }, ">");
+    }, "<")
+    .to('.outcome-label.GRANTED', {
+        attr: {
+            x: rightCenterX
+        },
+        visibility: "visible",
+        duration: 2,
+        ease: 'power1.inOut'
+    }, "<")
     
     // new timeline for making circles into pie graphs
     const racePieTL = gsap.timeline({
@@ -1872,13 +2188,16 @@ function draw() {
             trigger: "#section4",
             start: "top center",
             end: "center center",
-            scrub: 1
+            scrub: 1,
+            onEnter: () => {
+                moveBarsTimeline.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
     
     // Fade out the denied and granted whole circles
     racePieTL
-    .to('.denied-circle, .granted-circle', {
+    .to('.outcome-circle.DENIED, .outcome-circle.GRANTED', {
         visibility: "hidden",
         duration: 2,
         ease: 'power1.out'
@@ -1896,14 +2215,12 @@ function draw() {
             trigger: "#section5",
             start: "top center",
             end: "center center",
-            scrub: 1
+            scrub: 1,
+            onEnter: () => {
+                racePieTL.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
-
-    // highlightPieSectionTimeline
-    // .add(() => {
-    //     d3.selectAll('.denied-slice, .granted-slice').classed('no-tooltip', true);
-    // }, 0)
 
     highlightPieSectionTimeline
     .set('.denied-slice, .granted-slice', { pointerEvents: 'none' })
@@ -1930,7 +2247,10 @@ function draw() {
         trigger: "#section6",
         start: "top center",
         end: "center center",
-        scrub: 1
+        scrub: 1,
+        onEnter: () => {
+            highlightPieSectionTimeline.progress(1).pause(); // Complete the animation, then pause
+        },
         }
     });
 
@@ -1960,40 +2280,78 @@ function draw() {
         ease: 'power1.inOut'
     }, 0);
 
+    const highlightPieSectionTimeline3 = gsap.timeline({
+        scrollTrigger: {
+        trigger: "#section61",
+        start: "top center",
+        end: "center center",
+        scrub: 1,
+        onEnter: () => {
+            highlightPieSectionTimeline2.progress(1).kill(); // Complete the animation, then pause
+        },
+        }
+    })
+
+    highlightPieSectionTimeline3
+    .to('.granted-slice, outcome-label.GRANTED', {
+        opacity: .3,
+        duration: 1,
+        ease: 'power1.In'
+    })
+    .to('.pie-text-granted.BLACK, .pie-text-granted.WHITE', {
+        visibility: "hidden",
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.In'
+    })
+    .to('.pie-text-denied.WHITE, .pie-text-denied.BLACK, .denied-slice.BLACK, .denied-slice.WHITE', {
+        visibility: "visible",
+        opacity: 1,
+        duration: 1,
+        ease: 'power1.In'
+    })
+
+    
+    
+
     const raceButterflyTL = gsap.timeline({
         scrollTrigger: {
         trigger: "#section7",
         start: "top top",
         end: "center center",
-        scrub: 1
+        scrub: 1,
+        onEnter: () => {
+            highlightPieSectionTimeline3.progress(1).kill();
+        },
         }
     });
 
     raceButterflyTL
    .to('.denied-slice, .granted-slice, .pie-text-denied.BLACK, .pie-text-granted.BLACK, .pie-text-granted.WHITE, .pie-text-denied.WHITE', {
         visibility: "hidden",
-        duration: 2,
+        opacity: 0,
+        duration: 1,
         ease: 'power1.In'
     })
-    .to('.denied-circle, .granted-circle', {
+    .to('.outcome-circle.GRANTED, .outcome-circle.DENIED', {
         visibility: "visible",
-        duration: 2,
+        duration: 1,
         ease: 'power1.Out'
     }, "<")
-    .to(".denied-circle, .granted-circle", { 
+    .to(".outcome-circle.GRANTED, .outcome-circle.DENIED", { 
         duration: 2,
         attr: {
             r: 0
         },
     }, ">")
-    .to(".circle-label", {
+    .to(".outcome-label.DENIED, .outcome-label.GRANTED", {
         attr: {
             y: height - 50
         }
     }, "<")
     .to('.race-butterfly-granted, .race-butterfly-denied, .raceButterflyyAxis', {
         visibility: "visible",
-        duration: 2,
+        duration: 3,
         ease: "power1.inOut"
     }, ">")
     .to('.butterflyxAxisLeft, .butterflyxAxisRight',{
@@ -2007,17 +2365,15 @@ function draw() {
         trigger: "#section8",
         start: "top center",
         end: "center center",
-        scrub: 1
+        scrub: 1,
+        onEnter: () => {
+            raceButterflyTL.progress(1).pause(); // Complete the animation, then pause
+        },
         }
     });
     
     highlightRBTL
     .set('.race-butterfly-granted, .race-butterfly-denied', { pointerEvents: 'none' }) // Disable tooltip at the start
-    // .to('.race-butterfly-granted.BLACK, .butterfly-denied.BLACK, .butterfly-granted.WHITE, .butterfly-denied.WHITE', {
-    //     duration: 1,
-    //     opacity: 1,
-    //     ease: 'power1.inOut'
-    // })
     .to('.race-butterfly-granted.HISPANIC, .race-butterfly-granted.AMERIND_ALSK, .race-butterfly-granted.ASIAN_PACIFIC, .race-butterfly-granted.UNKNOWN_OTHER, .race-butterfly-denied.HISPANIC, .race-butterfly-denied.AMERIND_ALSK, .race-butterfly-denied.ASIAN_PACIFIC, .race-butterfly-denied.UNKNOWN_OTHER', {
         duration: 1,
         opacity: 0.3, 
@@ -2038,180 +2394,62 @@ function draw() {
         }
     }, '<');
 
-// const transitionToIntButterflyTL = gsap.timeline({
-//     scrollTrigger: {
-//         trigger: "#section81",
-//         start: "top center",
-//         end: "center center",
-//         scrub: 1
-//     }
-// });
-
-// transitionToIntButterflyTL
-// .to('.race-butterfly-denied', {
-//     attr:{
-//         width: 0
-//     },
-//     duration: 3,
-//     ease: 'power1.inOut'
-// })
-// .to('.race-butterfly-granted', {
-//     attr: {
-//         x: d => butterflyxScaleLeft(0),
-//         width: 0
-//     },
-//     duration: 3,
-//     ease: 'power1.inOut'
-// }, "<")
-// .to(".raceButterflyyAxis,.race-butterfly-percentage-granted, .race-butterfly-percentage-denied", {
-//     visibility: "hidden",
-//     duration: 1,
-//     ease: 'power1.inOut'
-// })
-// .to('.int-butterfly-granted, .int-butterfly-denied', {
-//         visibility: "visible",
-//         duration: 3,
-//         ease: "power1.inOut"
-// }, ">")
-// .to('.intButterflyyAxis',{
-//     visibility: "visible",
-//     duration: 1,
-//     ease: "power1.inOut"
-// }, "<")
-
 
     // GSAP Timeline for transitioning from race to age butterfly chart
-const transitionToAgeButterflyTL = gsap.timeline({
-    scrollTrigger: {
-        trigger: "#section9",
-        start: "top center",
-        end: "center center",
-        scrub: 1
-    }
-});
+    const transitionToAgeButterflyTL = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section9",
+            start: "top center",
+            end: "center center",
+            scrub: 1,
+            onEnter: () => {
+                highlightRBTL.progress(1).pause(); // Complete the animation, then pause
+            },
+        }
+    });
 
-transitionToAgeButterflyTL
-.to('.race-butterfly-denied', {
-    attr:{
-        width: 0
-    },
-    duration: 3,
-    ease: 'power1.inOut'
-})
-.to('.race-butterfly-granted', {
-    attr: {
-        x: d => butterflyxScaleLeft(0),
-        width: 0
-    },
-    duration: 3,
-    ease: 'power1.inOut'
-}, "<")
-.to(".raceButterflyyAxis,.race-butterfly-percentage-granted, .race-butterfly-percentage-denied", {
-    visibility: "hidden",
-    duration: 1,
-    ease: 'power1.inOut'
-})
-.to('.age-butterfly-granted, .age-butterfly-denied', {
-        visibility: "visible",
+    transitionToAgeButterflyTL
+    .to('.race-butterfly-granted', {
+        attr:{
+            width: 0
+        },
         duration: 3,
+        ease: 'power1.inOut'
+    })
+    .to('.race-butterfly-denied', {
+        attr: {
+            x: d => butterflyxScaleLeft(0),
+            width: 0
+        },
+        duration: 3,
+        ease: 'power1.inOut'
+    }, "<")
+    .to(".raceButterflyyAxis,.race-butterfly-percentage-granted, .race-butterfly-percentage-denied", {
+        visibility: "hidden",
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, "<")
+    .to('.age-butterfly-granted, .age-butterfly-denied', {
+            visibility: "visible",
+            duration: 3,
+            ease: "power1.inOut"
+    }, ">")
+    .to('.ageButterflyyAxis',{
+        visibility: "visible",
+        duration: 1,
         ease: "power1.inOut"
-}, ">")
-.to('.ageButterflyyAxis',{
-    visibility: "visible",
-    duration: 1,
-    ease: "power1.inOut"
-}, "<")
-
-
-   
-    // const agePieTL = gsap.timeline({
-    //     scrollTrigger: {
-    //     trigger: "#section9",
-    //     start: "top center",
-    //     end: "center center",
-    //     scrub: 1
-    //     }
-    // });
-
-    // agePieTL
-    // .to('.race-butterfly-granted, .race-butterfly-denied, .raceButterflyyAxis, .butterflyxAxisLeft, .butterflyxAxisRight, .race-butterfly-percentage-granted.BLACK, .race-butterfly-percentage-denied.BLACK, .race-butterfly-percentage-granted.WHITE, .race-butterfly-percentage-denied.WHITE', {
-    //     visibility: "hidden",
-    //     duration: 1,
-    //     ease: "power1.inOut"
-    // })
-    // .to('.denied-circle, .granted-circle', {
-    //     visibility: "visible",
-    //     duration: 2,
-    //     attr: {
-    //         r: finalRadius
-    //     },
-    //     ease: 'power1.Out'
-    //     }, ">")
-    // .to(".circle-label", {
-    //     attr: {
-    //         y: svgCenterY + finalRadius + 30
-    //     }
-    // }, "<")
-    // .to('.denied-circle, .granted-circle', {
-    //     visibility: "hidden",
-    //     delay: 1,
-    //     duration: 2,
-    //     ease: 'power1.Out'
-    // }, ">")
-    // .to(".age-denied-slice, .age-granted-slice", {
-    //     visibility: "visible",
-    //     duration: 2,
-    //     ease: 'power1.Out'
-    // }, ">")
-
-    // const ageButterflyTL = gsap.timeline({
-    //     scrollTrigger: {
-    //     trigger: "#section10",
-    //     start: "top center",
-    //     end: "center center",
-    //     scrub: 1
-    //     }
-    // });
-
-    // ageButterflyTL
-    // .to('.age-denied-slice, .age-granted-slice, .pie-text-granted.WHITE', {
-    //     visibility: "hidden",
-    //     duration: 2,
-    //     ease: 'power1.In'
-    // })
-    // .to('.denied-circle, .granted-circle', {
-    //     visibility: "visible",
-    //     duration: 2,
-    //     ease: 'power1.Out'
-    // }, "<")
-    // .to(".denied-circle, .granted-circle", { 
-    //     duration: 2,
-    //     attr: {
-    //         r: 0
-    //     },
-    // }, ">")
-    // .to(".circle-label", {
-    //     attr: {
-    //         y: height - 50
-    //     }
-    // }, "<")
-    // .to('.age-butterfly-granted, .age-butterfly-denied, .ageButterflyyAxis', {
-    //     visibility: "visible",
-    //     duration: 2,
-    //     ease: "power1.inOut"
-    // }, ">")
-    // .to('.butterflyxAxisLeft, .butterflyxAxisRight',{
-    //     visibility: "visible",
-    //     duration: 1,
-    //     ease: "power1.inOut"
-    // }, "<")
+    }, "<")
 
     const highlightABTL = gsap.timeline({
         scrollTrigger: {
         trigger: "#section10",
         start: "top center",
         end: "center center",
-        scrub: 1
+        scrub: 1,
+        onEnter: () => {
+            transitionToAgeButterflyTL.progress(1).pause(); // Complete the animation, then pause
+        },
         }
     });
     
@@ -2237,45 +2475,82 @@ transitionToAgeButterflyTL
         }
     }, '<');
 
+// Timeline for highlighting the OVER55 bar
+const highlightABTL2 = gsap.timeline({
+    scrollTrigger: {
+        trigger: "#section102",
+        start: "top center",
+        end: "center center",
+        scrub: 1,
+        onEnter: () => {
+            highlightABTL.progress(1).pause(); // Complete and pause the previous animation
+        },
+    }
+});
 
-//OVER55 BAR IS THE ONLY ONE LEFT TIMELINE
-    // const highlightABTL2 = gsap.timeline({
-    //     scrollTrigger: {
-    //     trigger: "#section11",
-    //     start: "top center",
-    //     end: "center center",
-    //     scrub: 1
-    //     }
-    // });
+highlightABTL2
+    // Highlight the OVER55 bar and percentages
+    .to('.age-butterfly-granted.AOVER55, .age-butterfly-denied.AOVER55', {
+        opacity: 1,
+        duration: 1,
+        ease: 'power1.inOut'
+    })
+    .to('.age-butterfly-percentage-granted.AOVER55, .age-butterfly-percentage-denied.AOVER55', {
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.inOut'
+    }, '<')
 
-    // highlightABTL2
-    // .to('.age-butterfly-granted.AOVER55, .age-butterfly-denied.AOVER55', {
-    //     duration: 1,
-    //     opacity: 1,
-    //     ease: 'power1.inOut'
-    // })
-    // .to('.age-butterfly-granted.AUNDER25, .age-butterfly-denied.AUNDER25, .age-butterfly-granted.A45_54, .age-butterfly-denied.A45_54', {
-    //     duration: 1,
-    //     opacity: .3,
-    //     visibility: "visible",
-    //     ease: 'power1.inOut'
-    // }, '<')
-    // .to('.age-butterfly-percentage-granted.AUNDER25, .age-butterfly-percentage-denied.AUNDER25, .age-butterfly-percentage-granted.A45_54, .age-butterfly-percentage-denied.A45_54', {
-    //     duration: 1,
+    // Dim and hide other age group bars and percentages
+    .to('.age-butterfly-granted:not(.AOVER55), .age-butterfly-denied:not(.AOVER55)', {
+        opacity: .3,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, '<')
+    .to('.age-butterfly-percentage-granted:not(.AOVER55), .age-butterfly-percentage-denied:not(.AOVER55)', {
+        visibility: "hidden",
+        duration: 1,
+        ease: 'power1.inOut'
+    })
+
+    // .to('.butterflyxAxisLeft, .butterflyxAxisRight, .ageButterflyyAxis', {
     //     visibility: "hidden",
-    //     ease: 'power1.inOut'
-    // })
-    // .to('.age-butterfly-percentage-granted.AOVER55, .age-butterfly-percentage-denied.AOVER55',{
     //     duration: 1,
-    //     visibility: "visible",
-    //     ease: 'power1.inOut'
-    // }, '<')
-    // .to('.age-butterfly-granted.AUNDER25, .age-butterfly-denied.AUNDER25, .age-butterfly-granted.A45_54, .age-butterfly-denied.A45_54, .age-butterfly-granted.A25_34, .age-butterfly-denied.A25_34, .age-butterfly-granted.A35_44, .age-butterfly-denied.A35_44, .butterflyxAxisLeft, .butterflyxAxisRight, .ageButterflyyAxis, .age-butterfly-percentage-granted.AOVER55, .age-butterfly-percentage-denied.AOVER55, .circle-label', {
-    //     duration: 1,
-    //     visibility: "hidden",
     //     ease: 'power1.inOut',
     //     delay: 5
-    // }, '>')
+    // });
+
+
+    const blankTL = gsap.timeline({
+        scrollTrigger: {
+        trigger: "#section11",
+        start: "top center",
+        end: "center center",
+        scrub: 1,
+        onEnter: () => {
+            highlightABTL.progress(1).pause(); // Complete the animation, then pause
+        },
+        }
+    });
+
+    blankTL
+    .to('.age-butterfly-granted, .age-butterfly-denied, .ageButterflyyAxis, .butterflyxAxisLeft, .butterflyxAxisRight, .age-butterfly-percentage-granted, .age-butterfly-percentage-denied', {
+        visibility: "hidden",
+        opacity: 0,
+        duration: 1,
+        ease: 'power1.inOut'
+    }, "<")
+    .to('.outcome-circle.GRANTED, .outcome-circle.DENIED', {
+        visibility: "visible",
+        attr: {
+            r: finalRadius
+        },
+        duration: 2,
+        ease: 'power1.Out'
+    }, "<")
+
+
+
     
 
 
@@ -2316,6 +2591,7 @@ transitionToAgeButterflyTL
             end: "center center",
             scrub: true,
             onEnter: () => {
+                blankTL.progress(1).pause();
                 state.kdeFilter = "prop_sent_served"; 
                 updateKDEPlot(state.kdeFilter); 
             },
@@ -2327,6 +2603,32 @@ transitionToAgeButterflyTL
     });
 
     kernelDensityTimeline
+    .to('.outcome-circle.GRANTED, .outcome-circle.DENIED', {
+        attr: {
+            r: 0
+        },
+        duration: 1,
+        ease: 'power1.Out'
+    })
+    .to('.legend.DENIED, .legend.GRANTED',{
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.inOut'
+    })
+    .to('.outcome-label.DENIED', {
+        attr: {
+            x: width-120,
+            y: (outcomes.indexOf("DENIED") * 20) + 13
+        },
+        // textAnchor: "end"
+    })
+    .to('.outcome-label.GRANTED', {
+        attr: {
+            x: width-120,
+            y: (outcomes.indexOf("GRANTED") * 20) + 13
+        },
+        // textAnchor: "end"
+    })
     .to('.age-butterfly-denied', {
         attr:{
             width: 0
@@ -2342,37 +2644,37 @@ transitionToAgeButterflyTL
         duration: 1,
         ease: 'none'
     }, "<")
-    .to('.ageButterflyyAxis, .butterflyxAxisLeft, .butterflyxAxisRight, .age-butterfly-percentage-granted, .age-butterfly-percentage-denied, .circle-label', {
-        visibility: "hidden",
-        duration: 1,
-        ease: 'power1.inOut'
-    }, "<")
+    // .to('.ageButterflyyAxis, .butterflyxAxisLeft, .butterflyxAxisRight, .age-butterfly-percentage-granted, .age-butterfly-percentage-denied', {
+    //     visibility: "hidden",
+    //     duration: 1,
+    //     ease: 'power1.inOut'
+    // }, "<")
 
 
-    gsap.timeline({
-        scrollTrigger: {
-            trigger: "#section13",
-            start: "top center",
-            end: "center center",
-            scrub: true,
-            onEnter: () => {
-                state.kdeFilter = "prop_sent_served";
-                updateKDEPlot(state.kdeFilter); 
-                state.kdeNDFilter = "prop_sent_served";
-                addNormalDistLine(state.kdeNDFilter);
-            },
-            onLeave: () =>{
-                state.kdeFilter = "prop_sent_served";
-                updateKDEPlot(state.kdeFilter); 
-                state.kdeNDFilter = "prop_sent_served";
-                addNormalDistLine(state.kdeNDFilter);
-            },
-            onLeaveBack: () => {
-                state.kdeNDFilter = "null";
-                addNormalDistLine(state.kdeNDFilter);
-            }
-        }
-    });
+    // gsap.timeline({
+    //     scrollTrigger: {
+    //         trigger: "#section13",
+    //         start: "top center",
+    //         end: "center center",
+    //         scrub: true,
+    //         onEnter: () => {
+    //             state.kdeFilter = "prop_sent_served";
+    //             updateKDEPlot(state.kdeFilter); 
+    //             // state.kdeNDFilter = "prop_sent_served";
+    //             // addNormalDistLine(state.kdeNDFilter);
+    //         },
+    //         onLeave: () =>{
+    //             state.kdeFilter = "prop_sent_served";
+    //             updateKDEPlot(state.kdeFilter); 
+    //             // state.kdeNDFilter = "prop_sent_served";
+    //             // addNormalDistLine(state.kdeNDFilter);
+    //         },
+    //         onLeaveBack: () => {
+    //             // state.kdeNDFilter = "null";
+    //             // addNormalDistLine(state.kdeNDFilter);
+    //         }
+    //     }
+    // });
 
     gsap.timeline({
         scrollTrigger: {
@@ -2383,14 +2685,14 @@ transitionToAgeButterflyTL
             onEnter: () => {
                 state.btnFilter = "time_serv_at_int";
                 updateKDEPlot(state.btnFilter);
-                state.kdeNDFilter = "null";
-                addNormalDistLine(state.kdeNDFilter);
+                // state.kdeNDFilter = "null";
+                // addNormalDistLine(state.kdeNDFilter);
             },
             onLeaveBack: () => {
                 state.btnFilter = "prop_sent_served"; 
                 updateKDEPlot(state.btnFilter);
-                state.kdeNDFilter = "prop_sent_served";
-                addNormalDistLine(state.kdeNDFilter);
+                // state.kdeNDFilter = "prop_sent_served";
+                // addNormalDistLine(state.kdeNDFilter);
             }
         }
     });
@@ -2404,17 +2706,24 @@ transitionToAgeButterflyTL
             onEnter: () => {
                 state.btnFilter = "null";
                 updateKDEPlot(state.btnFilter);
-                state.kdeNDFilter = "null";
-                addNormalDistLine(state.kdeNDFilter);
+                // state.kdeNDFilter = "null";
+                // addNormalDistLine(state.kdeNDFilter);
             },
             onLeaveBack: () => {
                 state.btnFilter = "time_serv_at_int"; 
                 updateKDEPlot(state.btnFilter);
-                state.kdeNDFilter = "null";
-                addNormalDistLine(state.kdeNDFilter);
+                // state.kdeNDFilter = "null";
+                // addNormalDistLine(state.kdeNDFilter);
             }
         }
     });
+
+    kdeToBubblesTL
+    .to('.outcome-label.DENIED, .outcome-label.GRANTED, .legend.DENIED, .legend.GRANTED', {
+        visibility: "hidden",
+        duration: 1,
+        ease: 'power1.out'
+    })
 
     bubbles.each(function(d, i) {
         let targetRadius = radiusScale(d[1]);
@@ -2431,11 +2740,11 @@ transitionToAgeButterflyTL
         });
     }, 0);
 
-    // kdeToBubblesTL.to(".bubble-label",{
-    //     visibility: "visible",
-    //     duration: 1,
-    //     ease: 'power1.Out'
-    // });
+    kdeToBubblesTL.to(".bubble-label",{
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.Out'
+    });
 
 
 //     // mergeCirclesTimeline
@@ -2467,7 +2776,10 @@ transitionToAgeButterflyTL
             trigger: "#section17",
             start: "top center",
             end: "center center",
-            scrub: true
+            scrub: true,
+            onEnter: () => {
+                kdeToBubblesTL.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
 
@@ -2545,7 +2857,10 @@ transitionToAgeButterflyTL
         trigger: "#section18",
         start: "top center",
         end: "center center",
-        scrub: 1
+        scrub: 1,
+        onEnter: () => {
+            moveBubblesTL.progress(1).pause(); // Complete the animation, then pause
+        },
         }
     });
 
@@ -2566,7 +2881,10 @@ transitionToAgeButterflyTL
             trigger: "#section19",
             start: "top center",
             end: "center center",
-            scrub: true
+            scrub: true,
+            onEnter: () => {
+                interviewPieTL.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
 
@@ -2596,7 +2914,10 @@ transitionToAgeButterflyTL
             trigger: "#section20",
             start: "top center",
             end: "center center",
-            scrub: true
+            scrub: true,
+            onEnter: () => {
+                highlightIntPieTL1.progress(1).pause(); // Complete the animation, then pause
+            },
         }
     });
 
@@ -2626,5 +2947,106 @@ transitionToAgeButterflyTL
         ease: 'power1.inOut'
     }, 0);
 
+    const justOnePieTL = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section21",
+            start: "top center",
+            end: "center center",
+            scrub: true,
+            onEnter: () => {
+                highlightIntPieTL2.progress(1).pause(); // Complete the animation, then pause
+            },
+            
+        }
+    });
+
+    justOnePieTL
+    .set(' .reap-slice.DENIED', { pointerEvents: "auto" })
+    .to('.init-slice, .pie-text-init, .pie-text-reap.GRANTED, .bubble-label.INITIAL', {
+        visibility: "hidden",
+        opacity: 0,
+        duration: 1,
+        ease: "power1.inOut"
+    })
+    .to('.reap-slice.DENIED',{
+        attr: { transform: `translate(${svgCenterX}, ${svgCenterY})` },
+        duration: 2
+    })
+    .to('.reap-slice:not(.DENIED), .pie-text-reap.DENIED, .bubble-label.REAPPEAR',{
+        visibility: "hidden",
+        opacity: 0,
+        duration: 1,
+        ease: "power1.inOut"
+    }, "<")
+
+    const pieToBarsTL = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section22",
+            start: "top center",
+            end: "center center",
+            scrub: true,
+            onEnter: () => { 
+                justOnePieTL.progress(1).pause(),
+                state.btnFilter = "ageGroup";
+                updateBarChart(state.btnFilter, false);
+            },
+            // onLeave: () => {
+            //     state.btnFilter = "null"; 
+            //     updateBarChart(state.btnFilter, false);
+            // },
+            onEnterBack: () => { 
+                state.btnFilter = "ageGroup";
+                updateBarChart(state.btnFilter, false);
+            },
+            onLeaveBack: () => {
+                state.btnFilter = "null"; 
+                updateBarChart(state.btnFilter), false;
+            }
+        }
+    });
+
+    pieToBarsTL
+    .to('.reap-slice.DENIED',{
+        visibility: "hidden",
+        opacity: 0,
+        duration: 1,
+        ease: "power1.inOut",
+        onEnter: () => {
+            pieToBarsTL.progress(1).pause(); // Complete the animation, then pause
+        },
+    })
+
+
+    const barsChangeTL = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section23",
+            start: "top center",
+            end: "center center",
+            scrub: true,
+            onEnter: () => { 
+                justOnePieTL.progress(1).pause(),
+                state.btnFilter = "ageGroup";
+                updateBarChart(state.btnFilter, true);
+            },
+            // onLeave: () => {
+            //     state.btnFilter = "null"; 
+            //     updateBarChart(state.btnFilter);
+            // },
+            onEnterBack: () => { 
+                state.btnFilter = "ageGroup";
+                updateBarChart(state.btnFilter, true);
+            },
+            // onLeaveBack: () => {
+            //     state.btnFilter = "null"; 
+            //     updateBarChart(state.btnFilter);
+            // }
+        }
+    });
+    barsChangeTL
+    .to('.legend.DENIED, .legend.GRANTED, .outcome-label.DENIED, .outcome-label.GRANTED',{
+        visibility: "visible",
+        duration: 1,
+        ease: 'power1.inOut'
+    })
     
 };

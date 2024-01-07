@@ -6,7 +6,7 @@ body{
 }
 
 .small-text{
-  font-size: 10px
+  font-size: 12px
 }
 
 h1 {
@@ -48,7 +48,8 @@ section {
   align-items: left; 
   justify-content: center; 
   padding: 20px; 
-  transition: opacity 0.3s ease-in-out; 
+  transition: opacity 0.3s ease-in-out;
+  line-height: 1.6;
 }
 
 .break{
@@ -70,17 +71,91 @@ section {
   stroke: none;
 }
 
+.raceButterflyyAxis .tick text{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.ageButterflyyAxis{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.pie-text-reap{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.pie-text-init{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.pie-text-granted{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.pie-text-denied{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.race-butterfly-percentage-denied{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.race-butterfly-percentage-granted{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.age-butterfly-percentage-denied{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.age-butterfly-percentage-granted{
+  font-weight: 200;
+  letter-spacing: .5px;
+}
+.kde-x-axis{
+  font-weight: 200;
+  letter-spacing: .5px;
+  font-size: 14px;
+}
+
+.butterflyxAxisLeft text{
+  font-weight: 200;
+  letter-spacing: .5px;
+  font-size: 14px;
+}
+.butterflyxAxisRight text{
+  font-weight: 200;
+  letter-spacing: .5px;
+  font-size: 14px;
+}
+.bubble-label{
+  font-weight: 200;
+  letter-spacing: .5px;
+  font-size: 14px;
+}
+.kde-x-label{
+  font-weight: 200;
+  letter-spacing: .5px;
+  font-size: 14px;
+}
 .butterflyxAxisLeft .domain {
   stroke: none;
 }
 .butterflyxAxisRight .domain {
   stroke: none;
 }
-.x-axis .domain{
+.kde-x-axis .domain{
   stroke: none;
 }
 .y-axis .domain{
   stroke: none;
+}
+.x-axis .domain{
+  stroke: none;
+}
+.x-axis text{
+  font-weight: 200;
+  letter-spacing: .5px;
+  font-size: 14px;
 }
 
 .content-container {
@@ -89,6 +164,7 @@ section {
   overflow-y: scroll;
   /* overflow-y: hidden !important; */
   height: 100vh;
+  scroll-snap-stop: always;
   scroll-snap-type: mandatory;
   scroll-snap-type: y mandatory;
 }
@@ -114,6 +190,11 @@ svg {
   width: 70%; 
   height: auto;
   shape-rendering: crispEdges;
+  overflow: visible;
+}
+.outcome-label{
+  font-weight: 200;
+  letter-spacing: 1px;
 }
 
 #container svg {
@@ -141,6 +222,10 @@ section p {
   display: none;
   font-size: 14;
 }
+.tooltip-inactive {
+  pointer-events: none;
+}
+
 .count-number {
   font-weight: bold;
 }
@@ -151,6 +236,13 @@ section p {
 
 .no-tooltip {
   pointer-events: none; 
+}
+.button-container {
+  display: flex;
+  justify-content: center; /* Aligns items horizontally at the center */
+  align-items: center; /* Aligns items vertically at the center (optional, if you need vertical alignment) */
+  flex-direction: row; /* Items are placed in a row */
+  gap: 10px; /* Adjust as needed for spacing between buttons */
 }
 
 /* CSS */
@@ -177,7 +269,7 @@ section p {
 }
 
 .button-38:hover {
-  background-color: rgb(249,250,251);
+  background-color: rgb(222, 223, 224);
 }
 
 .button-38:focus {
@@ -187,4 +279,8 @@ section p {
 
 .button-38:focus-visible {
   box-shadow: none;
+}
+.button-38-active {
+  background-color: rgb(222, 223, 224);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
