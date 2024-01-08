@@ -2,7 +2,7 @@
   "name": "2yrs_interviews",
   "source": "src/index.html",
   "scripts": {
-    "start": "parcel",
+    "start": "parcel src/index.html",
     "prebuild": "shx rm -rf dist/*",
     "build": "parcel build ./src/index.html --no-scope-hoist --public-url ./",
     "push-gh-pages": "push-dir --dir=dist --branch=gh-pages --cleanup --verbose"
