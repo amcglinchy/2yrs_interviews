@@ -370,9 +370,7 @@ function updateBarChart(attribute, includeGranted = false) {
         .attr("fill", "#B15E6C")
         .on("mouseover", mouseOver)
         .on('mousemove', function(event, d) {
-            // Make sure 'd' contains the expected data structure
             const readableCategory = labelMapping[d.key] || d.key;
-        
             d3.select('#tooltip')
                 .style('opacity', 1)
                 .html(`There were <b>${d.value}</b> 
@@ -395,7 +393,6 @@ function updateBarChart(attribute, includeGranted = false) {
             .attr("fill", "#BCD979")
             .on("mouseover", mouseOver)
             .on('mousemove', function(event, d) {
-                // Make sure 'd' contains the expected data structure
                 const readableCategory = labelMapping[d.key] || d.key;            
                 d3.select('#tooltip')
                     .style('opacity', 1)
@@ -405,7 +402,7 @@ function updateBarChart(attribute, includeGranted = false) {
                     .style('left', (event.pageX + 10) + 'px')
                     .style('top', (event.pageY - 10) + 'px');
             })
-            .on("mouseout", mouseOut);;
+            .on("mouseout", mouseOut);
     }
 
     // X Axis
@@ -420,7 +417,7 @@ function updateBarChart(attribute, includeGranted = false) {
         .style("font-size", "12px")
         .style('text-anchor', 'middle');
 
-    // Optional: Y Axis
+    // Y Axis
     // svg.selectAll(".y-axis").remove(); // Clear previous axis
     // svg.append("g")
     //     .attr("class", "y-axis")
@@ -2999,7 +2996,7 @@ highlightABTL2
                 updateBarChart(state.btnFilter, false);
             },
             onLeaveBack: () => {
-                state.btnFilter = "null"; 
+                state.btnFilter = "ageGroup"; 
                 updateBarChart(state.btnFilter), false;
             }
         }
@@ -3016,7 +3013,6 @@ highlightABTL2
         },
     })
 
-
     const barsChangeTL = gsap.timeline({
         scrollTrigger: {
             trigger: "#section23",
@@ -3024,7 +3020,7 @@ highlightABTL2
             end: "center center",
             scrub: true,
             onEnter: () => { 
-                justOnePieTL.progress(1).pause(),
+                pieToBarsTL.progress(1).pause(),
                 state.btnFilter = "ageGroup";
                 updateBarChart(state.btnFilter, true);
             },
@@ -3048,5 +3044,28 @@ highlightABTL2
         duration: 1,
         ease: 'power1.inOut'
     })
-    
+
+    const barsFadeBlack = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#section24",
+            start: "top center",
+            end: "center center",
+            scrub: true,
+            onEnter: () => {
+                state.btnFilter = "ageGroup";
+                updateBarChart(state.btnFilter, true);
+                barsFadeBlack.to('.bar.denied, .bar.granted', {
+                    fill: "black",
+                    duration: 3,
+                    ease: "power1.inOut"
+                })
+                .to('.x-axis, .legend.DENIED, .legend.GRANTED, .outcome-label.DENIED, .outcome-label.GRANTED',{
+                    opacity: 0,
+                    duration: 3,
+                    ease: "power1.inOut"
+                })
+            },
+        }
+    });
+
 };
