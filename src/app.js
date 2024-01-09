@@ -640,8 +640,8 @@ function init() {
 
     deniedTotal = state.interviews.filter(d => d.interview_decision === "DENIED").length;
     grantedTotal = state.interviews.filter(d=> d.interview_decision === "GRANTED").length;
-    let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
-    whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
+    // let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
+    // let whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
     reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
     initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
