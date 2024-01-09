@@ -5,9 +5,6 @@
     "start": "parcel src/index.html",
     "predeploy": "rm -rf dist && parcel build src/index.html --public-url 'https://github.com/amcglinchy/2yrs_interviews'",
     "deploy": "gh-pages -d dist"
-    // "prebuild": "shx rm -rf dist/*",
-    // "build": "parcel build ./src/index.html --no-scope-hoist --public-url ./",
-    // "push-gh-pages": "push-dir --dir=dist --branch=gh-pages --cleanup --verbose"
   },
   "version": "1.0.0",
   "repository": "https://github.com/amcglinchy/2yrs_interviews.git",
