@@ -1,6 +1,7 @@
 {
   "name": "2yrs_interviews",
   "source": "src/index.html",
+  "homepage": "https://amcglinchy.github.io/2yrs_interviews/",
   "scripts": {
     "start": "parcel src/index.html",
     "prebuild": "shx rm -rf dist/*",
