@@ -640,18 +640,18 @@ function init() {
 
     deniedTotal = state.interviews.filter(d => d.interview_decision === "DENIED").length;
     grantedTotal = state.interviews.filter(d=> d.interview_decision === "GRANTED").length;
-    // let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
-    // let whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
-    reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
-    initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
+    let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
+    let whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
+    let reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
+    let initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
     state.raceDataInterviews = d3.group(state.interviews, d => d.race__ethnicity);
     state.intTypeData = d3.group(state.interviews, d => d.parole_board_interview_type);
-    races = Array.from(state.raceData.keys());
-    intTypes = Array.from(state.intTypeData.keys());
-    over55 = state.interviews.filter(d=> d.age >= 55);
-    under55 = state.interviews.filter(d=>d.age < 55);
-    interviewTotals = state.interviews.length;
+    let races = Array.from(state.raceData.keys());
+    let intTypes = Array.from(state.intTypeData.keys());
+    let over55 = state.interviews.filter(d=> d.age >= 55);
+    let under55 = state.interviews.filter(d=>d.age < 55);
+    let interviewTotals = state.interviews.length;
 
     over55intType = d3.group(over55, d => d.parole_board_interview_type);
 
