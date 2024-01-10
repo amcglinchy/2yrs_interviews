@@ -30,7 +30,7 @@ const labelMapping = {
     '25_34': "25-34",
     '35_44': "35-44",
     '45_54': '45-54',
-    'OVER55': "OVER 55",
+    'OVER55': "55 OVER",
     'prop_sent_served': 'Percentage of Maximum Sentence Served at Time of Interview',
     'age_entered': 'Age the Interviewee Entered Prison',
     'age': 'Age of Individual at Time of Interview',
@@ -3070,5 +3070,22 @@ highlightABTL2
             },
         }
     });
+
+    const barsFadeOut = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#conclusion",
+            start: "top center",
+            end: "center center",
+            scrub: true,
+            onEnter: () => {
+                barsFadeOut.to('.bar.denied, .bar.granted', {
+                    opacity: 0,
+                    duration: 5,
+                    ease: "power1.inOut"
+                })
+            },
+        }
+    });
+
 
 };
