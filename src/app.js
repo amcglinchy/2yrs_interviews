@@ -44,6 +44,7 @@ let tl1, racexAxis, axisGroup, interviewTypeData, deniedTotal, grantedTotal, but
 let typeCircles, typeColorScale, decColorScale, butterflyxScaleLeft, butterflyxScaleRight, tooltip;
 let butterflyxAxisLeft, butterflyxAxisRight, bubbles, raceColorScale, raceButterflyyScale;
 let over55, under55;
+let outcomes, outcomeyScale, outcomexScale;
 let kdey, kdex, kdeyAxis, kdexAxis;
 let interviewTypeProportions, radiusScale, intxScale, intyScale;
 
@@ -134,6 +135,7 @@ function normalDistribution(x, mean, stdDev) {
 
 //KERNEL DENSITY PLOT UPDATE
 function updateKDEPlot(attribute) {
+
     const maxValue = d3.max(state.interviews, d => d[attribute]);
 
     kdex = d3.scaleLinear()
@@ -647,10 +649,10 @@ function init() {
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
     state.raceDataInterviews = d3.group(state.interviews, d => d.race__ethnicity);
     state.intTypeData = d3.group(state.interviews, d => d.parole_board_interview_type);
-    let races = Array.from(state.raceData.keys());
+    races = Array.from(state.raceData.keys());
     let intTypes = Array.from(state.intTypeData.keys());
-    let over55 = state.interviews.filter(d=> d.age >= 55);
-    let under55 = state.interviews.filter(d=>d.age < 55);
+    over55 = state.interviews.filter(d=> d.age >= 55);
+    under55 = state.interviews.filter(d=>d.age < 55);
     let interviewTotals = state.interviews.length;
 
     let over55intType = d3.group(over55, d => d.parole_board_interview_type);
@@ -689,7 +691,7 @@ function init() {
     let sortedOutcomeDataArray = Array.from(state.outcomeData.entries());
     sortedOutcomeDataArray.sort((a, b) => b[1].length - a[1].length);
     state.outcomeData = new Map(sortedOutcomeDataArray);
-    let outcomes = Array.from(state.outcomeData.keys());
+    outcomes = Array.from(state.outcomeData.keys());
 
     console.log("state.ageData", state.ageData);
     console.log("ageGroups", ageGroups);
@@ -889,20 +891,20 @@ function init() {
     
 
     // CREATE SCALES
-    const xScale = d3.scaleLinear()
+    xScale = d3.scaleLinear()
     .domain([0, d3.max([state.interviews.length, state.individuals.length, state.moreThanOnce.length])])
     .range([m.left, width - m.right]);
 
-    const yScale = d3.scaleBand()
+    yScale = d3.scaleBand()
     .domain(['Total Interviews', 'Unique Persons', 'IDs More Than Once'])
     .range([m.top, height - m.bottom])
     .padding(0.2);
         
-    const outcomeyScale = d3.scaleLinear()
+    outcomeyScale = d3.scaleLinear()
     .domain([0, d3.max(outcomes, outcome => state.outcomeData.get(outcome).length)])
     .range([height - m.bottom, m.top]);
 
-    const outcomexScale = d3.scaleBand()
+    outcomexScale = d3.scaleBand()
     .domain(outcomes)
     .range([m.left, width - m.right])
     .padding(0.1);
@@ -915,7 +917,7 @@ function init() {
     const grantedCenterX = outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2;
     const deniedCenterX = outcomexScale('DENIED') + outcomexScale.bandwidth() / 2;
 
-    const raceColorScale = d3.scaleOrdinal()
+    raceColorScale = d3.scaleOrdinal()
     .domain(races)
     .range(raceColors);
 
@@ -923,16 +925,16 @@ function init() {
     .domain(ageGroups)
     .range(ageColors);
 
-    const decColorScale = d3.scaleOrdinal()
+    decColorScale = d3.scaleOrdinal()
     .domain(outcomes)
     .range(barColors);
 
-    const typeColorScale = d3.scaleOrdinal()
+    typeColorScale = d3.scaleOrdinal()
     .domain(intTypes)
     .range(bubbleColors);
 
     // CREATE SVG
-    let svg = d3.select(".svg-container")
+    svg = d3.select(".svg-container")
     .append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -950,7 +952,7 @@ function init() {
     // .attr("height", yScale.bandwidth())
     // .attr("fill", "#1169e4");
 
-    let tooltip = d3.select("#tooltip");
+    tooltip = d3.select("#tooltip");
 
     //FIRST BAR GRAPH W/ STACKED FIRST BAR
     let bar1Group = svg.selectAll(".bar1")
@@ -989,7 +991,7 @@ function init() {
         // })
         .on("mouseout", mouseOut);
 
-    let rect2 = svg
+    rect2 = svg
     .selectAll(".bar2")
     .data([state.individuals])
     .enter()
@@ -1010,7 +1012,7 @@ function init() {
     //     })
     // .on("mouseout", mouseOut)
 
-    let rect3 = svg
+    rect3 = svg
     .selectAll(".bar3")
     .data([state.moreThanOnce])
     .enter()
@@ -1032,7 +1034,7 @@ function init() {
     // .on("mouseout", mouseOut);
 
     //TEXT/COUNTS FOR BAR GRAPH
-    let countText = svg
+    countText = svg
     .append("text")
     .attr("x", xScale(state.interviews.length)-120)
     .attr("y", yScale('Total Interviews') + yScale.bandwidth()/1.5)
@@ -1513,15 +1515,15 @@ function init() {
 
     // SCALES AND AXES FOR ALL BUTTERFLY CHARTS
 
-    const butterflyxScaleLeft = d3.scaleLinear()
+    butterflyxScaleLeft = d3.scaleLinear()
     .domain([0, 50])
     .range([(width / 2), m.left]);
 
-    const butterflyxScaleRight = d3.scaleLinear()
+    butterflyxScaleRight = d3.scaleLinear()
     .domain([0, 50])
     .range([(width / 2), (width - m.right)]);
 
-    const butterflyxAxisLeft = svg.append("g")
+    butterflyxAxisLeft = svg.append("g")
     .attr("transform", `translate(0, ${m.top})`)
     .attr("class", "butterflyxAxisLeft")
     .attr("visibility", "hidden")
@@ -1530,7 +1532,7 @@ function init() {
     .style("font-size", "14px")
     .attr("text-anchor", "middle");
     
-    const butterflyxAxisRight = svg.append("g")
+    butterflyxAxisRight = svg.append("g")
     .attr("transform", `translate(0, ${m.top})`)
     .attr("class", "butterflyxAxisRight")
     .attr("visibility", "hidden")
@@ -1540,7 +1542,7 @@ function init() {
     .attr("text-anchor", "middle");
 
 // RACE BUTTERFLY CHART
-    const raceButterflyyScale = d3.scaleBand()
+    raceButterflyyScale = d3.scaleBand()
         .domain(combinedRaceData.map(d => d.category)) 
         .range([m.top, height - m.bottom])
         .padding(0.1);
@@ -1819,28 +1821,28 @@ function init() {
 
 
 // INTERVIEW TYPE BUBBLE CHART
-    let interviewTypeProportions = new Map();
+    interviewTypeProportions = new Map();
 
     state.intTypeData.forEach((entries, intType) => {
         let proportion = entries.length / interviewTotals;
         interviewTypeProportions.set(intType, proportion);
     });
 
-    const radiusScale = d3.scaleSqrt()
+    radiusScale = d3.scaleSqrt()
     .domain([0, d3.max(interviewTypeProportions.values())])
     .range([0, maxBubbleRadius]); 
 
-    const intxScale = d3.scaleBand()
+    intxScale = d3.scaleBand()
     .domain([...interviewTypeProportions.keys()])
     .range([0, width]);
 
-    const intyScale = d3.scaleLinear()
+    intyScale = d3.scaleLinear()
     .domain([0, 1])
     .range([height, 0]);
 
     console.log(state.intTypeData)
 
-    let bubbles = svg.selectAll(".bubble")
+    bubbles = svg.selectAll(".bubble")
         .data([...interviewTypeProportions.entries()])
         .enter().append("circle")
         .attr("class", "bubble")
@@ -1878,7 +1880,7 @@ function init() {
 
 
 //KERNEL DENSITY
-    let kdeChartContainer = svg.append("g")
+    kdeChartContainer = svg.append("g")
         .attr("class", "kdeChartContainer")
 
     kdeChartContainer.append("g")
