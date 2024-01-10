@@ -1878,7 +1878,7 @@ function init() {
 
 
 //KERNEL DENSITY
-    kdeChartContainer = svg.append("g")
+    let kdeChartContainer = svg.append("g")
         .attr("class", "kdeChartContainer")
 
     kdeChartContainer.append("g")
