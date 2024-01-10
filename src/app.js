@@ -40,6 +40,7 @@ const labelMapping = {
 
 /* GLOBALS */
 let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races, deniedCircle, grantedCircle;
+let countText;
 let tl1, racexAxis, axisGroup, interviewTypeData, deniedTotal, grantedTotal, butterflyAxis;
 let typeCircles, typeColorScale, decColorScale, butterflyxScaleLeft, butterflyxScaleRight, tooltip;
 let butterflyxAxisLeft, butterflyxAxisRight, bubbles, raceColorScale, raceButterflyyScale;
