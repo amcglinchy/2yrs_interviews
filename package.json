@@ -6,7 +6,7 @@
     "start": "parcel src/index.html",
     "prebuild": "shx rm -rf dist/*",
     "build": "parcel build ./src/index.html --no-scope-hoist --public-url ./",
-    "predeploy": "shx rm -rf dist && PARCEL_WORKER_BACKEND=process parcel build ./src/index.html --public-url 'https://amcglinchy.github.io/2yrs_interviews/'",
+    "predeploy": "shx rm -rf dist && PARCEL_WORKERS=0 parcel build ./src/index.html --public-url 'https://amcglinchy.github.io/2yrs_interviews/'",
     "deploy": "push-dir --dir=dist --branch=gh-pages --cleanup --verbose"
   },
   "version": "1.0.0",
