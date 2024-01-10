@@ -658,7 +658,7 @@ function init() {
     //sort age data
     state.ageData = d3.group(state.interviews, d=>d.ageGroup);
     state.ageData = new Map(ageGroupOrder.map(ageGroup => [ageGroup, state.ageData.get(ageGroup) || []]));
-    ageGroups = Array.from(state.ageData.keys());
+    let ageGroups = Array.from(state.ageData.keys());
 
         // Filter the interviews first
     const filteredInterviews = state.interviews.filter(d => 
