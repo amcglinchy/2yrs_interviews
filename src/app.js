@@ -75,9 +75,7 @@ import("../data/all_interviews_capstone_final.json").then(raw_data => {
 });
 
 /* FUNCTIONS */
-function arePieChartsInteractive() {
-    return window.scrollY >= document.querySelector("#section4").offsetTop;
-}
+
 
 //MOUSE EVENTS
 let mouseOver = (event) => {
@@ -801,94 +799,11 @@ function init() {
     combinedAgeData.sort((a, b) => ageGroupOrder.indexOf(a.category) - ageGroupOrder.indexOf(b.category));
     combinedInterviewTypeData.sort((a, b) => b.percentOfCategoryDenied - a.percentOfCategoryDenied);
 
-    console.log("here",combinedAgeData)
-
     state.combinedData = {
         race: combinedRaceData,
         age: combinedAgeData
     };
 
-    //DATA FOR OVER 55 VS UNDER 55 NOT USED YET
-    function processDataForButterflyChart(individuals) {
-
-        const calculateAverage = (data, key) => {
-            const sum = data.reduce((acc, curr) => acc + (curr[key] || 0), 0);
-            return sum / data.length;
-        };
-
-        const calculateAverageLifeInPrison = (data) => {
-            const sum = data.reduce((acc, curr) => {
-                const lifePercentage = (curr.age - curr.age_entered) / curr.age *100;
-                return acc + (isFinite(lifePercentage) ? lifePercentage : 0);
-            }, 0);
-            return sum / data.length;
-        };
-    
-        const under55 = individuals.filter(d => d.age < 55);
-        const age55AndUp = individuals.filter(d => d.age >= 55);
-    
-        const averagesUnder55 = {
-            age: calculateAverage(under55, 'age'),
-            ageEntered: calculateAverage(under55, 'age_entered'),
-            timeServed: calculateAverage(under55, 'time_serv_at_int'),
-            maxSent: calculateAverage(under55, 'max_sent'),
-            minSent: calculateAverage(under55, 'min_sent'),
-            propSent: calculateAverage(under55, 'prop_sent_served'),
-            lifeInPrison: calculateAverageLifeInPrison(under55)
-        };
-    
-        const averagesAge55AndUp = {
-            age: calculateAverage(age55AndUp, 'age'),
-            ageEntered: calculateAverage(age55AndUp, 'age_entered'),
-            timeServed: calculateAverage(age55AndUp, 'time_serv_at_int'),
-            maxSent: calculateAverage(age55AndUp, 'max_sent'),
-            minSent: calculateAverage(age55AndUp, 'min_sent'),
-            propSent: calculateAverage(age55AndUp, 'prop_sent_served'),
-            lifeInPrison: calculateAverageLifeInPrison(age55AndUp)
-        };
-    
-        const butterflyChartData = [
-            { category: 'Under 55', ...averagesUnder55 },
-            { category: '55 and Up', ...averagesAge55AndUp }
-        ];
-    
-        return butterflyChartData;
-    }
-    
-
-    // function processDataForButterflyChart2(data) {
-    //     const ageGroups = {
-    //         'UNDER55': { granted: 0, denied: 0, total: 0 },
-    //         '55ANDUP': { granted: 0, denied: 0, total: 0 }
-    //     };
-    
-    //     data.forEach(d => {
-    //         const ageGroup = d.age < 55 ? 'UNDER55' : '55ANDUP';
-    
-    //         ageGroups[ageGroup].total += 1;
-    
-    //         if (d.interview_decision === 'GRANTED') {
-    //             ageGroups[ageGroup].granted += 1;
-    //         } else if (d.interview_decision === 'DENIED') {
-    //             ageGroups[ageGroup].denied += 1;
-    //         }
-    //     });
-    
-    //     Object.keys(ageGroups).forEach(group => {
-    //         if (ageGroups[group].total > 0) {
-    //             ageGroups[group].percentGranted = (ageGroups[group].granted / ageGroups[group].total) * 100;
-    //             ageGroups[group].percentDenied = (ageGroups[group].denied / ageGroups[group].total) * 100;
-    //         } else {
-    //             ageGroups[group].percentGranted = 0;
-    //             ageGroups[group].percentDenied = 0;
-    //         }
-    //     });
-    
-    //     return ageGroups;
-    // }
-    
-    // const processedData = processDataForButterflyChart(state.individuals);
-    // console.log(processedData);
     
 
     // CREATE SCALES
@@ -969,14 +884,8 @@ function init() {
         .attr("fill", "black")
         .attr("stroke", "black")
         .attr("stroke-width", 1)
-        // .on("mouseover", function(event, d) {
-        //     if (d3.select(this).classed("animation-complete")) {
-        //         tooltip.style("display", "block")
-        //     }
-        // })
         .on("mouseover", mouseOver)
         .on("mousemove",function(event, d) {
-            // if (d3.select(this).classed("animation-complete")) {
                 let count = d[0][1] - d[0][0];
                 let formattedCount = count.toLocaleString(); 
                 let percentage = (count / state.interviews.length) * 100; 
@@ -989,7 +898,6 @@ function init() {
                 .style("top", (event.pageY - 10) + "px")
                 .html(tooltipContent);
             })
-        // })
         .on("mouseout", mouseOut);
 
     rect2 = svg
@@ -1004,14 +912,6 @@ function init() {
     .attr("height", yScale.bandwidth())
     .attr("fill", "gray")
     .attr("visibility", "hidden")
-    // .on("mouseover", mouseOver)
-    // .on("mousemove", function(event, d) {
-    //     tooltip.style("display", "block")
-    //            .html(d.length + " individuals interviewed")
-    //            .style("left", (event.pageX + 10) + "px")
-    //            .style("top", (event.pageY - 10) + "px");
-    //     })
-    // .on("mouseout", mouseOut)
 
     rect3 = svg
     .selectAll(".bar3")
@@ -1025,14 +925,6 @@ function init() {
     .attr("fill", "silver")
     .attr("visibility", "hidden")
     .attr("class", "bar3")
-    // .on("mouseover", mouseOver)
-    // .on("mousemove", function(event, d) {
-    //     tooltip.style("display", "block")
-    //                .html(d.length + " persons interviewed more than once")
-    //                .style("left", (event.pageX + 10) + "px")
-    //                .style("top", (event.pageY - 10) + "px");
-    //         })
-    // .on("mouseout", mouseOut);
 
     //TEXT/COUNTS FOR BAR GRAPH
     countText = svg
@@ -1043,46 +935,6 @@ function init() {
     .text(0)
     .attr("class", "count-text")
     .attr("visibility", "hidden");
-
-    // bar2text = svg
-    // .append("text")
-    // .attr("x", xScale(state.individuals.length)+50)
-    // .attr("y", yScale('Unique Persons') + yScale.bandwidth() / 2)
-    // .attr("dy", ".35em")
-    // .text(state.individuals.length + " individuals")
-    // .attr("class", "bar2text")
-    // .attr("visibility", "hidden");
-    
-    // bar3text = svg
-    // .append("text")
-    // .attr("x", xScale(state.moreThanOnce.length)+50)
-    // .attr("y", yScale('IDs More Than Once') + yScale.bandwidth() / 2)
-    // .attr("dy", ".35em")
-    // .text(state.moreThanOnce.length + " persons interviewed more than once")
-    // .attr("class", "bar3text")
-    // .attr("visibility", "hidden");
-
-    //AXIS FOR VERTICAL BAR GRAPH
-    // axisGroup = svg.append("g")
-    // .attr("class", "outcomeBarsAxis")
-    // .attr("visibility", "hidden")
-    // .call(outcomexAxis)
-    // .selectAll(".tick text")
-    // // .attr("transform", d => `translate(${(outcomexScale.bandwidth()/2)-20}, 0) rotate(-65)`)
-    // .attr("transform", d => `translate(${(outcomexScale.bandwidth()/2)-m.right}, 0)`)
-    // .style("text-anchor", "end")
-    // .style("font-size", "14px")
-    // // .attr("dx", "-.8em")
-    // // .attr("dy", ".15em");
-
-    // axisGroup = svg.append("g")
-    // .attr("class", "outcomeBarsAxis")
-    // .attr("visibility", "hidden")
-    // .call(outcomexAxis)
-    // .selectAll(".tick text")
-    // .attr("transform", d => `translate(${outcomexScale(d) + outcomexScale.bandwidth()/4}, 0)`) // Center align
-    // .style("text-anchor", "middle") // Set text-anchor to middle
-    // .style("font-size", "14px");
 
     svg.selectAll(".outcome-label")
         .data(outcomes)
@@ -1100,12 +952,12 @@ function init() {
         .data(outcomes)
         .enter()
         .append("g")
-        .attr("class", d => `legend ${d}`)  // Adding specific class based on outcome
+        .attr("class", d => `legend ${d}`)  
         .attr("transform", (d, i) => `translate(0, ${i * 20})`)
-        .attr("visibility", "hidden"); // Initially hidden
+        .attr("visibility", "hidden"); 
 
         legend.append("rect")
-        .attr("x", width - 200) // Adjust positioning as needed
+        .attr("x", width - 200)
         .attr("width", 18)
         .attr("height", 18)
         .attr("fill", d => decColorScale(d));
@@ -1129,7 +981,7 @@ function init() {
         .attr("fill", d => decColorScale(d))
         .attr("visibility", "hidden")
         .classed("outcome-circle", true)
-        .attr("class", d => `outcome-circle ${d}`); // Adding specific class
+        .attr("class", d => `outcome-circle ${d}`);
 
 
 // RACES PIE CHART
@@ -1225,69 +1077,6 @@ function init() {
     .attr('visibility', "hidden");
 
 
-//AGE PIE CHART
-    // ageDeniedPieData.sort((a, b) => a.value - b.value);
-    // ageGrantedPieData.sort((a, b) => a.value - b.value);
-
-    // const ageArc = d3.arc()
-    // .innerRadius(0)
-    // .outerRadius(finalRadius);
-
-    // const ageDeniedPie = d3.pie()
-    // .value(d => d.value)
-    // .sort(null)
-    // (ageDeniedPieData);
-
-    // const ageGrantedPie = d3.pie()
-    // .value(d => d.value)
-    // .sort(null)
-    // (ageGrantedPieData);
-
-
-    // // Add slices for the DENIED pie chart
-    // svg.selectAll('.age-denied-slice')
-    // .data(ageDeniedPie)
-    // .enter()
-    // .append('path')
-    // .attr('class', d => `age-denied-slice ${d.data.ageGroup}`)
-    // .attr('d', arc)
-    // .attr('fill', d => ageColorScale(d.data.ageGroup))
-    // .attr('transform', `translate(${rightCenterX}, ${svgCenterY})`)
-    // .attr("visibility", "hidden")
-    // .on("mouseover", mouseOver)
-    // .on("mousemove", function(event, d) {
-    //     const readableCategory = labelMapping[d.data.ageGroup] || d.data.ageGroup; 
-    //     let percent = calculatePercent(d.data.value, deniedTotal);
-    //     let tooltipContent = `<b>${percent}%</b> of the interviews <br> denied parole were <b>${readableCategory}</b>`;
-    //     tooltip
-    //         .style("left", (event.pageX + 10) + "px")
-    //         .style("top", (event.pageY - 10) + "px")
-    //         .html(tooltipContent);
-    // })
-    // .on("mouseout", mouseOut);
-
-    // svg.selectAll('.age-granted-slice')
-    // .data(ageGrantedPie)
-    // .enter()
-    // .append('path')
-    // .attr('class', d => `age-granted-slice ${d.data.ageGroup}`)
-    // .attr('d', arc)
-    // .attr('fill', d => ageColorScale(d.data.ageGroup))
-    // .attr('transform', `translate(${leftCenterX}, ${svgCenterY})`)
-    // .attr("visibility", "hidden")
-    // .on("mouseover", mouseOver)
-    // .on("mousemove", function(event, d) {
-    //     const readableCategory = labelMapping[d.data.ageGroup] || d.data.ageGroup; 
-    //     let percent = calculatePercent(d.data.value, grantedTotal);
-    //     let tooltipContent = `<b>${percent}%</b> of the interviews <br> granted parole were <b>${readableCategory}</b>`;
-    //     tooltip
-    //         .style("left", (event.pageX + 10) + "px")
-    //         .style("top", (event.pageY - 10) + "px")
-    //         .html(tooltipContent);
-    // })
-    // .on("mouseout", mouseOut);
-
-
     //INTERVIEW TYPE PIE CHARTS
 
     initTypePieData.sort((a, b) => a.value - b.value);
@@ -1352,167 +1141,35 @@ function init() {
     })
     .on("mouseout", mouseOut);
 
-        // PERCENT TEXT IN SLICES FOR THE HIGHLIGHT SECTIONS
-        svg.selectAll('.pie-text-init')
-        .data(initPie)
-        .enter()
-        .append('text')
-        .attr('class', d => `pie-text-init ${d.data.outcome}`)
-        .attr('transform', d => {
-            const [x, y] = arc.centroid(d);
-            return `translate(${x + leftCenterX}, ${y + svgCenterY})`;
-        })
-        .attr('text-anchor', 'middle')
-        .attr('dy', '0.35em')
-        .text(d => calculatePercent(d.data.value, initialTotal) + '%')
-        .attr('visibility', "hidden");
-    
-        svg.selectAll('.pie-text-reap')
-        .data(reapPie)
-        .enter()
-        .append('text')
-        .attr('class', d => `pie-text-reap ${d.data.outcome}`)
-        .attr('transform', d => {
-            const [x, y] = arc.centroid(d);
-            return `translate(${x + rightCenterX}, ${y + svgCenterY})`; 
-        })
-        .attr('text-anchor', 'middle')
-        .attr('dy', '0.35em')
-        .text(d => calculatePercent(d.data.value, reappearTotal) + '%')
-        .attr('visibility', "hidden");
+    // PERCENT TEXT IN SLICES FOR THE HIGHLIGHT SECTIONS
+    svg.selectAll('.pie-text-init')
+    .data(initPie)
+    .enter()
+    .append('text')
+    .attr('class', d => `pie-text-init ${d.data.outcome}`)
+    .attr('transform', d => {
+        const [x, y] = arc.centroid(d);
+        return `translate(${x + leftCenterX}, ${y + svgCenterY})`;
+    })
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .text(d => calculatePercent(d.data.value, initialTotal) + '%')
+    .attr('visibility', "hidden");
 
-    //INTERVIEW TYPE BAR CHART
-    // let intChartData = [];
+    svg.selectAll('.pie-text-reap')
+    .data(reapPie)
+    .enter()
+    .append('text')
+    .attr('class', d => `pie-text-reap ${d.data.outcome}`)
+    .attr('transform', d => {
+        const [x, y] = arc.centroid(d);
+        return `translate(${x + rightCenterX}, ${y + svgCenterY})`; 
+    })
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .text(d => calculatePercent(d.data.value, reappearTotal) + '%')
+    .attr('visibility', "hidden");
 
-    // state.intTypeData.forEach((entries, intType) => {
-    //     let grantedCount = entries.filter(d => d.interview_decision === "GRANTED").length;
-    //     let deniedCount = entries.filter(d => d.interview_decision === "DENIED").length;
-
-    //     intChartData.push({ intType: intType, decision: "Granted", count: grantedCount });
-    //     intChartData.push({ intType: intType, decision: "Denied", count: deniedCount });
-    // });
-
-    // // X-Scale (Category Scale)
-    // let intxScale = d3.scaleBand()
-    // .domain(intChartData.map(d => d.intType + "/" + d.decision))
-    // .rangeRound([0, width])
-    // .padding(0.1);
-
-    // // Y-Scale (Linear Scale)
-    // let intyScale = d3.scaleLinear()
-    // .domain([0, d3.max(intChartData, d => d.count)])
-    // .range([height, 0]);
-
-    // svg.selectAll(".bar")
-    // .data(intChartData)
-    // .enter().append("rect")
-    // .attr("class", "bar")
-    // .attr("x", d => intxScale(d.intType + "/" + d.decision))
-    // .attr("y", d => intyScale(d.count))
-    // .attr("width", intxScale.bandwidth())
-    // .attr("height", d => height - intyScale(d.count))
-    // .attr("fill", d => d.decision === "Granted" ? "#BCD979" : "#B15E6C");
-
-
-//BUTTERFLY CHART DATA
-
-    // function calculateCombinedPercentages(data, categoryKey, outcomeKey) {
-    //     let totalDenied = data.filter(d => d[outcomeKey] === "DENIED").length;
-    //     let totalGranted = data.filter(d => d[outcomeKey] === "GRANTED").length;
-
-    //     const categoryCounts = d3.rollup(data, 
-    //         v => d3.rollup(v, leaves => leaves.length, d => d[outcomeKey]),
-    //         d => d[categoryKey]);
-
-    //     let formattedData = [];
-
-    //     categoryCounts.forEach((outcomes, category) => {
-    //         const totalCategory = Array.from(outcomes.values()).reduce((a, b) => a + b, 0);
-    //         const deniedCount = outcomes.get("DENIED") || 0;
-    //         const grantedCount = outcomes.get("GRANTED") || 0;
-
-    //         let entry = {
-    //             category,
-    //             percentOfCategoryDenied: (deniedCount / totalCategory) * 100,
-    //             percentOfCategoryGranted: (grantedCount / totalCategory) * 100,
-    //             percentOfTotalDenied: (deniedCount / totalDenied) * 100,
-    //             percentOfTotalGranted: (grantedCount / totalGranted) * 100
-    //         };
-    //         formattedData.push(entry);
-    //     });
-
-    //     return formattedData;
-    // }
-
-    // let combinedRaceData = calculateCombinedPercentages(state.interviews, 'race__ethnicity', 'interview_decision');
-    // let combinedAgeData = calculateCombinedPercentages(state.interviews, 'ageGroup', 'interview_decision');
-    // let combinedInterviewTypeData = calculateCombinedPercentages(state.interviews, 'parole_board_interview_type', 'interview_decision');
-    // // let combinedClassData = calculateCombinedPercentages(state.interviews, 'class1', 'interview_decision')
-    // // let combinedData = [...combinedRaceData, ...combinedAgeData, ...combinedInterviewTypeData];
-    // // let requiredCategories = ["BLACK", "WHITE", "REAPPEAR", "INITIAL", "over55", "under55"];
-    // // let filteredData = combinedData.filter(d => requiredCategories.includes(d.category));
-
-    // combinedRaceData.sort((a, b) => b.percentOfCategoryDenied - a.percentOfCategoryDenied);
-    // combinedAgeData.sort((a, b) => b.percentOfCategoryDenied - a.percentOfCategoryDenied);
-
-    // state.combinedData = {
-    //     race: combinedRaceData,
-    //     age: combinedAgeData
-    // };
-
-    // function processDataForButterflyChart(individuals) {
-    //     // Helper function to calculate average
-    //     const calculateAverage = (data, key) => {
-    //         const sum = data.reduce((acc, curr) => acc + (curr[key] || 0), 0);
-    //         return sum / data.length;
-    //     };
-
-    //         // Helper function to calculate average life percentage in prison
-    //     const calculateAverageLifeInPrison = (data) => {
-    //         const sum = data.reduce((acc, curr) => {
-    //             const lifePercentage = (curr.age - curr.age_entered) / curr.age *100;
-    //             return acc + (isFinite(lifePercentage) ? lifePercentage : 0);
-    //         }, 0);
-    //         return sum / data.length;
-    //     };
-    
-    //     // Split data into two groups
-    //     const under55 = individuals.filter(d => d.age < 55);
-    //     const age55AndUp = individuals.filter(d => d.age >= 55);
-    
-    //     // Calculate averages for each group
-    //     const averagesUnder55 = {
-    //         age: calculateAverage(under55, 'age'),
-    //         ageEntered: calculateAverage(under55, 'age_entered'),
-    //         timeServed: calculateAverage(under55, 'time_serv_at_int'),
-    //         maxSent: calculateAverage(under55, 'max_sent'),
-    //         minSent: calculateAverage(under55, 'min_sent'),
-    //         propSent: calculateAverage(under55, 'prop_sent_served'),
-    //         lifeInPrison: calculateAverageLifeInPrison(under55)
-    //     };
-    
-    //     const averagesAge55AndUp = {
-    //         age: calculateAverage(age55AndUp, 'age'),
-    //         ageEntered: calculateAverage(age55AndUp, 'age_entered'),
-    //         timeServed: calculateAverage(age55AndUp, 'time_serv_at_int'),
-    //         maxSent: calculateAverage(age55AndUp, 'max_sent'),
-    //         minSent: calculateAverage(age55AndUp, 'min_sent'),
-    //         propSent: calculateAverage(age55AndUp, 'prop_sent_served'),
-    //         lifeInPrison: calculateAverageLifeInPrison(age55AndUp)
-    //     };
-    
-    //     // Prepare data for the chart
-    //     const butterflyChartData = [
-    //         { category: 'Under 55', ...averagesUnder55 },
-    //         { category: '55 and Up', ...averagesAge55AndUp }
-    //     ];
-    
-    //     return butterflyChartData;
-    // }
-    
-    // // Example usage
-    // const butterflyChartData = processDataForButterflyChart(state.individuals);
-    
 
     // SCALES AND AXES FOR ALL BUTTERFLY CHARTS
 
@@ -1548,7 +1205,6 @@ function init() {
         .range([m.top, height - m.bottom])
         .padding(0.1);
         
-
     combinedRaceData.forEach(d => {
         svg.append("rect")
             .attr('class', `race-butterfly-denied ${d.category}`)
@@ -1730,97 +1386,6 @@ function init() {
     });
 
 
-// INTERVIEW TYPE BUTTERFLY CHART
-
-// intButterflyyScale = d3.scaleBand()
-// .domain(combinedInterviewTypeData.map(d => d.category))
-// .range([m.top, height - m.bottom])
-// .padding(0.1);
-
-// combinedInterviewTypeData.forEach(d => {
-// svg.append("rect")
-//     .attr('class', `int-butterfly-granted A${d.category}`)
-//     .attr("x", butterflyxScaleLeft(d.percentOfCategoryGranted))
-//     .attr("y", intButterflyyScale(d.category))
-//     .attr("width", width / 2 - butterflyxScaleLeft(d.percentOfCategoryGranted))
-//     .attr("height", intButterflyyScale.bandwidth())
-//     .attr("fill", "#BCD979")
-//     .attr("visibility", "hidden")
-//     .on("mouseover", mouseOver)
-//     .on("mousemove", function(event) {
-//         const readableCategory = labelMapping[d.category] || d.category; 
-//         tooltip
-//             .html(`People aged <b>${readableCategory}</b> <br> were <br>
-//                 <b>GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% </b> and
-//                 <br> DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%`)
-//             .style("left", (event.pageX + 10) + "px")
-//             .style("top", (event.pageY - 10) + "px");
-//     })
-//     .on("mouseout", mouseOut);
-
-// svg.append("rect")
-//     .attr('class', `int-butterfly-denied A${d.category}`)
-//     .attr("x", width / 2)
-//     .attr("y", intButterflyyScale(d.category))
-//     .attr("width", butterflyxScaleRight(d.percentOfCategoryDenied) - width / 2) 
-//     .attr("height", intButterflyyScale.bandwidth())
-//     // .attr("fill", d => raceColorScale(d.category))
-//     .attr("fill", "#B15E6C")
-//     .attr("visibility", "hidden")
-//     .on("mouseover", mouseOver)
-//     .on("mousemove", function(event) {
-//         const readableCategory = labelMapping[d.category] || d.category; 
-//         tooltip
-//         .html(`People aged <b>${readableCategory}</b> <br> were <br>
-//             GRANTED parole ${d.percentOfCategoryGranted.toFixed(1)}% and
-//             <br> <b>DENIED parole ${d.percentOfCategoryDenied.toFixed(1)}%</b>`)
-//             .style("left", (event.pageX + 10) + "px")
-//             .style("top", (event.pageY - 10) + "px");
-//     })
-//     .on("mouseout", mouseOut);
-// });
-
-
-// // Adding Y-axis in the middle
-// intButterflyyAxis = svg.append("g")
-// // .attr("transform", `translate(${width / 2}, 0)`)
-// .attr("transform", `translate(${m.left}, 0)`)
-// .attr("class", "intButterflyyAxis")
-// .attr("visibility", "hidden")
-// .call(d3.axisLeft(intButterflyyScale).tickSize(0))
-// .selectAll(".tick text")
-// .text(d => labelMapping[d] || d)
-// .style("font-size", "12px")
-// .attr("text-anchor", "start");
-
-
-// //TEXT ELEMENT FOR HIGHLIGHTING
-// combinedInterviewTypeData.forEach(d => {
-//     svg.append("text")
-//         .attr('class', `int-butterfly-percentage-granted A${d.category}`)
-//         .attr("x", (butterflyxScaleLeft(0) + butterflyxScaleLeft(d.percentOfCategoryGranted)) / 2)
-//         .attr("y", intButterflyyScale(d.category) + intButterflyyScale.bandwidth() / 2)
-//         .attr("text-anchor", "middle")
-//         .attr("dy", "0.35em")
-//         .text(`${d.percentOfCategoryGranted.toFixed(1)}%`)
-//         .attr("fill", "black")
-//         .attr("visibility", "hidden");
-
-//     // Add text for denied percentage
-//     svg.append("text")
-//         .attr('class', `int-butterfly-percentage-denied A${d.category}`)
-//         .attr("x", (width / 2 + butterflyxScaleRight(d.percentOfCategoryDenied)) / 2)
-//         .attr("y", intButterflyyScale(d.category) + intButterflyyScale.bandwidth() / 2)
-//         .attr("text-anchor", "middle")
-//         .attr("dy", "0.35em")
-//         .text(`${d.percentOfCategoryDenied.toFixed(1)}%`)
-//         .attr("fill", "black")
-//         .attr("visibility", "hidden");
-
-// });
-        
-
-
 // INTERVIEW TYPE BUBBLE CHART
     interviewTypeProportions = new Map();
 
@@ -1890,35 +1455,6 @@ function init() {
 
     kdeChartContainer.append("g")
         .attr("class", "y-axis");
-
-//REAPPEAR DENIED AGE BAR CHART
-
-
-
-
-// Example call to the function
-// updateBarChart('ageGroup');
-
-    // const ageGroupxScale = d3.scaleBand()
-    //     .domain(interviewsByAgeGroupArray.map(d => d.ageGroup))
-    //     .range([0, width])
-    //     .padding(0.1);
-
-    // const ageGroupyScale = d3.scaleLinear()
-    //     .domain([0, d3.max(interviewsByAgeGroupArray, d => d.interviews.length)])
-    //     .range([height, 0]); // Invert range for y-axis
-
-    // // Draw the bars
-    // svg.selectAll(".bar")
-    //     .data(interviewsByAgeGroupArray)
-    //     .enter()
-    //     .append("rect")
-    //     .attr("class", "bar")
-    //     .attr("x", d => ageGroupxScale(d.ageGroup)) // Position bars using the x-scale
-    //     .attr("y", d => ageGroupyScale(d.interviews.length)) // Position bars using the y-scale
-    //     .attr("width", ageGroupxScale.bandwidth()) // Set bar width
-    //     .attr("height", d => height - ageGroupyScale(d.interviews.length)) // Set bar height
-    //     .attr("fill", "#69b3a2"); // Set bar color (change as needed)
 
     draw();
 }
@@ -2085,23 +1621,6 @@ function draw() {
         visibility: "visible",
         ease: "power1.inOut"
     })
-    // .to(".outcomeBarsAxis", {
-    //     attr: { transform: `translate(0, ${axisYPosition})` },
-    //     duration: 2,
-    //     ease: "power1.inOut",
-    // }, "<")
-    // .to(".outcomeBarsAxis", {
-    //     visibility: "visible",
-    //     ease: "power1.inOut"
-    // }, ">");
-
-    // addBarCounts(); 
-    // verticalBarTimeline.to('.bar-count', {
-    //     visibility: "visible", 
-    //     delay: 1,
-    //     duration: 1,
-    //     ease: 'power1.inOut',
-    // }, "<");
 
     const moveBarsTimeline = gsap.timeline({
         scrollTrigger: {
@@ -2190,7 +1709,7 @@ function draw() {
             end: "center center",
             scrub: 1,
             onEnter: () => {
-                moveBarsTimeline.progress(1).pause(); // Complete the animation, then pause
+                moveBarsTimeline.progress(1).pause(); 
             },
         }
     });
@@ -2217,7 +1736,7 @@ function draw() {
             end: "center center",
             scrub: 1,
             onEnter: () => {
-                racePieTL.progress(1).pause(); // Complete the animation, then pause
+                racePieTL.progress(1).pause(); 
             },
         }
     });
@@ -2249,7 +1768,7 @@ function draw() {
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            highlightPieSectionTimeline.progress(1).pause(); // Complete the animation, then pause
+            highlightPieSectionTimeline.progress(1).pause(); 
         },
         }
     });
@@ -2287,7 +1806,7 @@ function draw() {
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            highlightPieSectionTimeline2.progress(1).kill(); // Complete the animation, then pause
+            highlightPieSectionTimeline2.progress(1).kill(); 
         },
         }
     })
@@ -2367,13 +1886,13 @@ function draw() {
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            raceButterflyTL.progress(1).pause(); // Complete the animation, then pause
+            raceButterflyTL.progress(1).pause(); 
         },
         }
     });
     
     highlightRBTL
-    .set('.race-butterfly-granted, .race-butterfly-denied', { pointerEvents: 'none' }) // Disable tooltip at the start
+    .set('.race-butterfly-granted, .race-butterfly-denied', { pointerEvents: 'none' })
     .to('.race-butterfly-granted.HISPANIC, .race-butterfly-granted.AMERIND_ALSK, .race-butterfly-granted.ASIAN_PACIFIC, .race-butterfly-granted.UNKNOWN_OTHER, .race-butterfly-denied.HISPANIC, .race-butterfly-denied.AMERIND_ALSK, .race-butterfly-denied.ASIAN_PACIFIC, .race-butterfly-denied.UNKNOWN_OTHER', {
         duration: 1,
         opacity: 0.3, 
@@ -2403,7 +1922,7 @@ function draw() {
             end: "center center",
             scrub: 1,
             onEnter: () => {
-                highlightRBTL.progress(1).pause(); // Complete the animation, then pause
+                highlightRBTL.progress(1).pause();
             },
         }
     });
@@ -2448,7 +1967,7 @@ function draw() {
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            transitionToAgeButterflyTL.progress(1).pause(); // Complete the animation, then pause
+            transitionToAgeButterflyTL.progress(1).pause(); 
         },
         }
     });
@@ -2483,7 +2002,7 @@ const highlightABTL2 = gsap.timeline({
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            highlightABTL.progress(1).pause(); // Complete and pause the previous animation
+            highlightABTL.progress(1).pause(); 
         },
     }
 });
@@ -2513,14 +2032,6 @@ highlightABTL2
         ease: 'power1.inOut'
     })
 
-    // .to('.butterflyxAxisLeft, .butterflyxAxisRight, .ageButterflyyAxis', {
-    //     visibility: "hidden",
-    //     duration: 1,
-    //     ease: 'power1.inOut',
-    //     delay: 5
-    // });
-
-
     const blankTL = gsap.timeline({
         scrollTrigger: {
         trigger: "#section11",
@@ -2528,7 +2039,7 @@ highlightABTL2
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            highlightABTL.progress(1).pause(); // Complete the animation, then pause
+            highlightABTL.progress(1).pause();
         },
         }
     });
@@ -2548,40 +2059,6 @@ highlightABTL2
         duration: 2,
         ease: 'power1.Out'
     }, "<")
-
-
-
-    
-
-
-    // const butterflyTimeline2 = gsap.timeline({
-    //     scrollTrigger: {
-    //     trigger: "#section10",
-    //     start: "top center",
-    //     end: "center center",
-    //     scrub: 1
-    //     }
-    // });
-
-    // butterflyTimeline2
-    // // .to('.but-bar-cat-denied, .but-bar-cat-granted', {
-    // //     opacity: 0,
-    // //     duration: 1,
-    // //     ease: "power1.inOut"
-    // // })
-    // .to('.but-cat-text-denied, .but-cat-text-granted',{
-    //     visibility: "visible",
-    //     opacity: .5,
-    //     duration: 1,
-    //     ease: "power1.inOut"
-    // })
-
-    // .to('.but-bar-tot-denied, .but-bar-tot-granted, .but-tot-text-granted, .but-tot-text-denied', {
-    //     visibility: "visible",
-    //     duration: 1,
-    //     ease: "power1.inOut"
-    // })
-
 
 
     const kernelDensityTimeline = gsap.timeline({
@@ -2644,37 +2121,6 @@ highlightABTL2
         duration: 1,
         ease: 'none'
     }, "<")
-    // .to('.ageButterflyyAxis, .butterflyxAxisLeft, .butterflyxAxisRight, .age-butterfly-percentage-granted, .age-butterfly-percentage-denied', {
-    //     visibility: "hidden",
-    //     duration: 1,
-    //     ease: 'power1.inOut'
-    // }, "<")
-
-
-    // gsap.timeline({
-    //     scrollTrigger: {
-    //         trigger: "#section13",
-    //         start: "top center",
-    //         end: "center center",
-    //         scrub: true,
-    //         onEnter: () => {
-    //             state.kdeFilter = "prop_sent_served";
-    //             updateKDEPlot(state.kdeFilter); 
-    //             // state.kdeNDFilter = "prop_sent_served";
-    //             // addNormalDistLine(state.kdeNDFilter);
-    //         },
-    //         onLeave: () =>{
-    //             state.kdeFilter = "prop_sent_served";
-    //             updateKDEPlot(state.kdeFilter); 
-    //             // state.kdeNDFilter = "prop_sent_served";
-    //             // addNormalDistLine(state.kdeNDFilter);
-    //         },
-    //         onLeaveBack: () => {
-    //             // state.kdeNDFilter = "null";
-    //             // addNormalDistLine(state.kdeNDFilter);
-    //         }
-    //     }
-    // });
 
     gsap.timeline({
         scrollTrigger: {
@@ -2747,30 +2193,6 @@ highlightABTL2
     });
 
 
-//     // mergeCirclesTimeline
-//     //     .to('.denied-slice, .granted-slice', { opacity: 0, duration: 1 }, 0)
-//     //     .to('.denied-circle, .granted-circle', { opacity: 1, duration: 1 }, 0)
-
-//     mergeCirclesTimeline
-//     .to('.denied-circle', {
-//         duration: 1,
-//         attr: { cx: svgCenterX, cy: svgCenterY },
-
-//         ease: 'power1.inOut'
-//     })
-//     .to('.granted-circle', {
-//         duration: 1,
-//         attr: { cx: svgCenterX, cy: svgCenterY },
-//         ease: 'power1.inOut'
-//     }, '<')
-//     .to(".denied-circle, .granted-circle, .circle-label", { 
-//         duration: 0.5,
-//         r: 0,
-//         opacity: 0
-//     }, '+=0.5')
-
-
-
     const moveBubblesTL = gsap.timeline({
         scrollTrigger: {
             trigger: "#section17",
@@ -2778,7 +2200,7 @@ highlightABTL2
             end: "center center",
             scrub: true,
             onEnter: () => {
-                kdeToBubblesTL.progress(1).pause(); // Complete the animation, then pause
+                kdeToBubblesTL.progress(1).pause(); 
             },
         }
     });
@@ -2859,7 +2281,7 @@ highlightABTL2
         end: "center center",
         scrub: 1,
         onEnter: () => {
-            moveBubblesTL.progress(1).pause(); // Complete the animation, then pause
+            moveBubblesTL.progress(1).pause();
         },
         }
     });
@@ -2883,7 +2305,7 @@ highlightABTL2
             end: "center center",
             scrub: true,
             onEnter: () => {
-                interviewPieTL.progress(1).pause(); // Complete the animation, then pause
+                interviewPieTL.progress(1).pause(); 
             },
         }
     });
@@ -2916,7 +2338,7 @@ highlightABTL2
             end: "center center",
             scrub: true,
             onEnter: () => {
-                highlightIntPieTL1.progress(1).pause(); // Complete the animation, then pause
+                highlightIntPieTL1.progress(1).pause(); 
             },
         }
     });
@@ -2954,7 +2376,7 @@ highlightABTL2
             end: "center center",
             scrub: true,
             onEnter: () => {
-                highlightIntPieTL2.progress(1).pause(); // Complete the animation, then pause
+                highlightIntPieTL2.progress(1).pause(); 
             },
             
         }
@@ -3012,7 +2434,7 @@ highlightABTL2
         duration: 1,
         ease: "power1.inOut",
         onEnter: () => {
-            pieToBarsTL.progress(1).pause(); // Complete the animation, then pause
+            pieToBarsTL.progress(1).pause(); 
         },
     })
 
