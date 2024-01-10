@@ -46,7 +46,7 @@ let typeCircles, typeColorScale, decColorScale, butterflyxScaleLeft, butterflyxS
 let butterflyxAxisLeft, butterflyxAxisRight, bubbles, raceColorScale, raceButterflyyScale;
 let over55, under55;
 let outcomes, outcomeyScale, outcomexScale;
-let kdey, kdex, kdeyAxis, kdexAxis;
+let kdeChartContainer, kdey, kdex, kdeyAxis, kdexAxis;
 let interviewTypeProportions, radiusScale, intxScale, intyScale;
 
 
