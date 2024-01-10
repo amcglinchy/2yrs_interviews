@@ -40,11 +40,13 @@ const labelMapping = {
 
 /* GLOBALS */
 let svg, xScale, yScale, rect1, rect2, rect3, racexScale, raceyScale, races, deniedCircle, grantedCircle;
+let countText;
 let tl1, racexAxis, axisGroup, interviewTypeData, deniedTotal, grantedTotal, butterflyAxis;
 let typeCircles, typeColorScale, decColorScale, butterflyxScaleLeft, butterflyxScaleRight, tooltip;
 let butterflyxAxisLeft, butterflyxAxisRight, bubbles, raceColorScale, raceButterflyyScale;
 let over55, under55;
-let kdey, kdex, kdeyAxis, kdexAxis;
+let outcomes, outcomeyScale, outcomexScale;
+let kdeChartContainer, kdey, kdex, kdeyAxis, kdexAxis;
 let interviewTypeProportions, radiusScale, intxScale, intyScale;
 
 
@@ -134,6 +136,7 @@ function normalDistribution(x, mean, stdDev) {
 
 //KERNEL DENSITY PLOT UPDATE
 function updateKDEPlot(attribute) {
+
     const maxValue = d3.max(state.interviews, d => d[attribute]);
 
     kdex = d3.scaleLinear()
@@ -640,25 +643,25 @@ function init() {
 
     deniedTotal = state.interviews.filter(d => d.interview_decision === "DENIED").length;
     grantedTotal = state.interviews.filter(d=> d.interview_decision === "GRANTED").length;
-    // let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
-    // let whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
-    reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
-    initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
+    let blackTotal = state.interviews.filter(d=> d.race__ethnicity === "BLACK").length;
+    let whiteTotal = state.interviews.filter(d=> d.race__ethnicity === "WHITE").length;
+    let reappearTotal = state.interviews.filter(d=> d.parole_board_interview_type === "REAPPEAR").length;
+    let initialTotal = state.interviews.filter(d=> d.parole_board_interview_type === "INITIAL").length;
     state.raceData = d3.group(state.individuals, d => d.race__ethnicity);
     state.raceDataInterviews = d3.group(state.interviews, d => d.race__ethnicity);
     state.intTypeData = d3.group(state.interviews, d => d.parole_board_interview_type);
     races = Array.from(state.raceData.keys());
-    intTypes = Array.from(state.intTypeData.keys());
+    let intTypes = Array.from(state.intTypeData.keys());
     over55 = state.interviews.filter(d=> d.age >= 55);
     under55 = state.interviews.filter(d=>d.age < 55);
-    interviewTotals = state.interviews.length;
+    let interviewTotals = state.interviews.length;
 
-    over55intType = d3.group(over55, d => d.parole_board_interview_type);
+    let over55intType = d3.group(over55, d => d.parole_board_interview_type);
 
     //sort age data
     state.ageData = d3.group(state.interviews, d=>d.ageGroup);
     state.ageData = new Map(ageGroupOrder.map(ageGroup => [ageGroup, state.ageData.get(ageGroup) || []]));
-    ageGroups = Array.from(state.ageData.keys());
+    let ageGroups = Array.from(state.ageData.keys());
 
         // Filter the interviews first
     const filteredInterviews = state.interviews.filter(d => 
@@ -907,23 +910,23 @@ function init() {
     .range([m.left, width - m.right])
     .padding(0.1);
 
-    outcomexAxis = d3.axisBottom(outcomexScale)
+    const outcomexAxis = d3.axisBottom(outcomexScale)
     .tickFormat((d, i) => outcomes[i])
     .tickSize(0)
     .tickPadding(1); 
 
-    grantedCenterX = outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2;
-    deniedCenterX = outcomexScale('DENIED') + outcomexScale.bandwidth() / 2;
+    const grantedCenterX = outcomexScale('GRANTED') + outcomexScale.bandwidth() / 2;
+    const deniedCenterX = outcomexScale('DENIED') + outcomexScale.bandwidth() / 2;
 
     raceColorScale = d3.scaleOrdinal()
     .domain(races)
     .range(raceColors);
 
-    ageColorScale = d3.scaleOrdinal()
+    const ageColorScale = d3.scaleOrdinal()
     .domain(ageGroups)
     .range(ageColors);
 
-    const decColorScale = d3.scaleOrdinal()
+    decColorScale = d3.scaleOrdinal()
     .domain(outcomes)
     .range(barColors);
 
@@ -953,7 +956,7 @@ function init() {
     tooltip = d3.select("#tooltip");
 
     //FIRST BAR GRAPH W/ STACKED FIRST BAR
-    bar1Group = svg.selectAll(".bar1")
+    let bar1Group = svg.selectAll(".bar1")
     .data(stackedData)
     .enter().append("rect")
         .attr("class", d => `bar1-${d.key}`) 
@@ -1592,7 +1595,7 @@ function init() {
             .on("mouseout", mouseOut);
     });
 
-    raceButterflyyAxis = svg.append("g")
+    const raceButterflyyAxis = svg.append("g")
        . attr("transform", `translate(${width-m.right}, 0)`)
         .attr("class", "raceButterflyyAxis")
         .attr("visibility", "hidden")
@@ -1637,7 +1640,7 @@ function init() {
 
 // AGE BUTTERFLY CHART
 
-    ageButterflyyScale = d3.scaleBand()
+    const ageButterflyyScale = d3.scaleBand()
         .domain(combinedAgeData.map(d => d.category)) 
         .range([m.top, height - m.bottom])
         .padding(0.1);
@@ -1689,7 +1692,7 @@ function init() {
 
 
     // Adding Y-axis in the middle
-    ageButterflyyAxis = svg.append("g")
+    const ageButterflyyAxis = svg.append("g")
         // .attr("transform", `translate(${width / 2}, 0)`)
         .attr("transform", `translate(${width-m.right}, 0)`)
         .attr("class", "ageButterflyyAxis")
