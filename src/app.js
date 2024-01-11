@@ -306,6 +306,10 @@ function updateKDEPlot(attribute) {
 // }
 
 function updateBarChart(attribute, includeGranted = false) {
+
+    return new Promise((resolve) => {
+
+
     if (!attribute || attribute === "null") {
         svg.selectAll('.bar, .x-axis').remove(); // Remove all bars and the x-axis
         return; // Exit the function
@@ -423,6 +427,9 @@ function updateBarChart(attribute, includeGranted = false) {
     // svg.append("g")
     //     .attr("class", "y-axis")
     //     .call(d3.axisLeft(yScale));
+
+    resolve();
+});
 }
 
 
@@ -1463,9 +1470,9 @@ function init() {
 function draw() {
 
 
-    const selectElement = d3.selectAll("button")
+    const kdeButtons = d3.selectAll(".kde-button")
 
-        selectElement
+        kdeButtons
         .on("click", function () {
                 state.btnFilter = this.id
                 console.log(state.btnFilter)
@@ -1483,14 +1490,46 @@ function draw() {
         });
     });
 
+    //Get the button
+    let mybutton = document.getElementById("topBtn");
+
+    // When the user scrolls down 20px from the top of the document, show the button
+    window.onscroll = function () {
+    scrollFunction();
+    };
+
+    function scrollFunction() {
+    if (
+    document.body.scrollTop > 20 ||
+    document.documentElement.scrollTop > 20
+    ) {
+    mybutton.style.display = "block";
+    } else {
+    mybutton.style.display = "none";
+    }
+    }
+
+    mybutton.addEventListener("click", backToTop);
+
+    function backToTop() {
+        // Scroll to the top of the document
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    
+        window.location.reload()
+    }
+    
+    
+
     ScrollTrigger.defaults({scroller: ".content-container" });
     ScrollTrigger.defaults({toggleActions: 'play none none reverse'})
 
     tl1 = gsap.timeline({
         scrollTrigger: {
+            scroller: window,
             trigger: "#section1",
             start: "top center", 
-            end: "center center",
+            end: "bottom bottom",
         },
     });
 
@@ -1548,12 +1587,13 @@ function draw() {
     }, "section1MoveUp") 
     .to("#section1_2", {
         opacity: 1,
-        y: -30, 
+        y: -50, 
         duration: 1,
         ease: "power1.Out"
     }, "section1MoveUp")
     .to("#section1_3", {
-        opacity: 1, 
+        opacity: 1,
+        y: -50,  
         duration: 1
     }, ">") 
     .to(".bar3", {
@@ -1579,7 +1619,8 @@ function draw() {
     tlFlyOut
     .to(".bar2, .count-text, .bar2text, .bar3, .bar3text", {
         y: -200, 
-        visibility: "hidden", 
+        visibility: "hidden",
+        opacity: 0,
         duration: 0.5, 
         stagger: 0.1
     })
@@ -1638,6 +1679,7 @@ function draw() {
     .to('.bar1-OTHER, .bar1-POSTPONED', {
         y: "-=300",
         visibility: "hidden",
+        opacity: 0,
         duration: 3,
         ease: 'power1.inOut'
     }, "<")
@@ -1682,6 +1724,7 @@ function draw() {
         y: circleVerticalCenter, 
         height: 0, 
         visibility: "hidden",
+        opacity: 0,
         ease: 'power1.inOut'
     }, "<")
     .to('.outcome-label.DENIED', {
@@ -1718,6 +1761,7 @@ function draw() {
     racePieTL
     .to('.outcome-circle.DENIED, .outcome-circle.GRANTED', {
         visibility: "hidden",
+        opacity: 0,
         duration: 2,
         ease: 'power1.out'
     }, ">")
@@ -1829,8 +1873,6 @@ function draw() {
         duration: 1,
         ease: 'power1.In'
     })
-
-    
     
 
     const raceButterflyTL = gsap.timeline({
@@ -1850,7 +1892,7 @@ function draw() {
         visibility: "hidden",
         opacity: 0,
         duration: 1,
-        ease: 'power1.In'
+        ease: 'power1.inOut'
     })
     .to('.outcome-circle.GRANTED, .outcome-circle.DENIED', {
         visibility: "visible",
@@ -2028,6 +2070,7 @@ highlightABTL2
     }, '<')
     .to('.age-butterfly-percentage-granted:not(.AOVER55), .age-butterfly-percentage-denied:not(.AOVER55)', {
         visibility: "hidden",
+        opacity: 0,
         duration: 1,
         ease: 'power1.inOut'
     })
@@ -2053,6 +2096,7 @@ highlightABTL2
     }, "<")
     .to('.outcome-circle.GRANTED, .outcome-circle.DENIED', {
         visibility: "visible",
+        opacity: 1,
         attr: {
             r: finalRadius
         },
@@ -2122,7 +2166,7 @@ highlightABTL2
         ease: 'none'
     }, "<")
 
-    gsap.timeline({
+    const kernelDensityTimeline2 = gsap.timeline({
         scrollTrigger: {
             trigger: "#section15",
             start: "top center",
@@ -2167,6 +2211,7 @@ highlightABTL2
     kdeToBubblesTL
     .to('.outcome-label.DENIED, .outcome-label.GRANTED, .legend.DENIED, .legend.GRANTED', {
         visibility: "hidden",
+        opacity: 0,
         duration: 1,
         ease: 'power1.out'
     })
@@ -2289,6 +2334,7 @@ highlightABTL2
     interviewPieTL
     .to('.bubble',{
         visibility: "hidden",
+        opacity: 0,
         duration: 2,
         ease: 'power1.out'
         }, ">")
@@ -2421,8 +2467,8 @@ highlightABTL2
                 updateBarChart(state.btnFilter, false);
             },
             onLeaveBack: () => {
-                state.btnFilter = "ageGroup"; 
-                updateBarChart(state.btnFilter), false;
+                state.btnFilter = "null"; 
+                updateBarChart(state.btnFilter, false);
             }
         }
     });
@@ -2489,6 +2535,7 @@ highlightABTL2
                     duration: 3,
                     ease: "power1.inOut"
                 })
+                .set('.bar.denied, .bar.granted', { pointerEvents: "none" });
             },
         }
     });

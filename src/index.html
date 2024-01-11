@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>2YRS</title>
+    <title>Making Sense of Making Parole</title>
     <link rel="stylesheet" href="styles.css" />
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> -->
     <script type="module" src="app.js"></script>
@@ -42,11 +42,9 @@
     </div>
 
     <div class="content-container">
+      <button type="button" id="topBtn" title="Go to top">TOP</button>
       <div id="tooltip" class="tooltip"></div>
       <div class="text-sections">
-        <section id="section0">
-
-        </section>
         <!-- <section id="section1">
           <p>Over these two years, the Board of Parole of New York State
              conducted <span id="dynamicCount"><span class="count-number">0</span></span> interviews with persons eligible for parole.
@@ -62,7 +60,7 @@
         </section> -->
 
         <section id="section1">
-          <p id="section1_1" >Over these two years, the Board of Parole of New York State
+          <p id="section1_1" >Over these two years, the Board of Parole of New York
              conducted <span id="dynamicCount"><span class="count-number">0</span></span> interviews with persons eligible for parole.
           </p>
           <p id="section1_2" class="additional-text">
@@ -75,11 +73,8 @@
 
           <section id="section2">
               <p>Taking a look at the outcomes
-                <br>
                 of these interviews, approximately
-                <br>
                 <b>47%</b> were <b>denied</b> parole,
-                <br>
                 <b>34%</b> were <b>granted</b> parole.
               </p>
               <p>
@@ -104,18 +99,14 @@
           <section id="section5">
             <p>
               White identifiying people make up
-              <br> 
               <b>40.7%</b> of the <b>granted</b> interviews and
-              <br>
               <b>30.6%</b> of the <b>denied</b> interviews.
             </p>
           </section>
           <section id="section6">
             <p>
-              Black identifying people make up
-              <br> 
+              Black people make up
               <b>37.9%</b> of the <b>granted</b> interviews and
-              <br>
               <b>45.6%</b> of the <b>denied</b> interviews.
             </p>
           </section>
@@ -143,20 +134,16 @@
           </section>
           <section id="section8">
             <p>
-              Interviews of Black identifying people are 
-              <br>
+              Interviews of Black people are 
               <b>19.6%</b> more frequently denied than granted parole and
-              <br>
-              <b>8.26%</b> more frequently denied parole than interviews of White identifying people.
+              <b>8.26%</b> more frequently denied parole than interviews of White people.
             </p>
           </section>
           <section id="section81">
             <p>
-              Interviews of White idnetifyingpeople are 
-              <br>
+              Interviews of White people are 
               <b>1.05%</b> more frequently denied than granted parole and
-              <br>
-              <b>10.46%</b> more frequently granted parole than interviews of Black identifying people.
+              <b>10.46%</b> more frequently granted parole than interviews of Black people.
             </p>
           </section>
           <section id="section9">
@@ -170,28 +157,28 @@
           <section id="section10">
             <p>
               Interviews of people under 25 are 
-              <br>
               <b>32.91%</b> more frequently denied than granted parole and
-              <br>
               <b>9.2%</b> more frequently denied parole than interviews of people aged 45-54.
             </p>
           </section>
           <section id="section101">
             <p>
               Interviews of people aged 45-54 are 
-              <br>
               <b>5.18%</b> more frequently denied than granted parole and
-              <br>
               <b>18.5%</b> more frequently granted parole than interviews of people under 25.
             </p>
           </section>
           <section id="section102">
             <p>
-              Here, I want to specifically point out the <b>55 OVER</b> age group.
-              It is the only age group that doesn't follow the expected pattern of decreasing denials and increasing grants with advancing age. This age group is considered to be seniors, whereas in life outside of prison that begins at 65, those who're incarcerated experience accelerated aging. 
+              Here, I want to specifically point out the <b>55 and over</b> age group.
+            </p>
+            <p>
+              In prison, this age group is considered to be seniors, whereas in life outside of prison that begins at 65, those who're incarcerated experience accelerated aging. Due to incarceration, their biological aging speeds up. 
+            </p>
+            <p>  
+              It is the only age group that doesn't follow the expected pattern of decreasing denials and increasing grants with advancing age.
             </p>
           </section>
-
           <section id="section11">
             <p>
               So far, the data has shown some trends that, while intriguing, are not entirely unexpected considering the historical context of this country.
@@ -213,27 +200,24 @@
               <p>
                 This chart shows the frequency of parole denials and grants in relation to the portion of the maximum sentence served by individuals at the time of their interview. More simply, it compares how often parole is denied or granted at different stages of maximum sentence completion.
               </p>
-              <p>
-                Yes, some individuals have served 100% or more of their maximum sentence.
-              </p>
               <p class="small-text">
-                Note: Percentage of sentence served at interview was calculated using time served at interview over maximum sentence. To determine a maximum sentence length in years for those with a LIFE sentence, the individual's age was subtracted from the average American adult lifespan of 76 years old.
+                Note: Percentage of sentence served at interview was calculated using time served at interview divided by maximum sentence. To determine a maximum sentence length in years for those with a life sentence, the individual's age was subtracted from the average American adult lifespan of 76 years old.
             </p>
           </section>
           <section id="section14">
             <p>
-              The distribution seen here suggests that there's a sweet spot for being granted parole at around 25% of max sentence served
+              The distribution seen here suggests that there's a sweet spot for being granted parole at around 25% of maximum sentence served
               and a spike in denials of those who've served well over half of their maximum sentence.
             </p>
           </section>
           <section id ="section15">
             <p>
-              Explore the distribution of parole decisions (denied and granted) across different variables by toggling the options below.
+              Explore the distribution of parole decisions across different variables by toggling the options below.
           </p>
           <div class="button-container">
-            <button class="button-38 button-38-active" id="time_serv_at_int">TIME SERVED</button>
-            <button class="button-38" id="age_entered">AGE ENTERED</button>
-            <button class="button-38" id="age">AGE</button>
+            <button class="button-38 button-38-active kde-button" id="time_serv_at_int">TIME SERVED</button>
+            <button class="button-38 kde-button" id="age_entered">AGE ENTERED</button>
+            <button class="button-38 kde-button" id="age">AGE</button>
         </div>
           <p>
               Unlike percent of sentence served, the similar patterns in both granted and denied decisions across these variables suggests that they may not be as significant in determining the outcomes of parole decisions.
@@ -246,9 +230,7 @@
             <p>
               <b>INITIAL</b>: initial appearance, PIE hearings (parole immediately eligible), merit time hearings, early conditional parole for deportation hearings, medical hearings, and supplemental merit hearings.
               <br>
-              <br>
               <b>REAPPEAR</b>: Reappearances - release was previously denied.
-              <br>
               <br>
               <b>OTHER</b>: Parole violation hearings, hearings held after parole is granted but new information causes the parole board to reconsider, hearings following a successful appeal of parole denial.
             </p>
@@ -256,7 +238,7 @@
           </section>
           <section id="section17">
             <p>
-                Initial and reappearance interviews together account for approximately 97% of all parole interviews. Let's focus more closely on these two types.
+                Initial and reappearance interviews together account for approximately <b>97%</b>97% of all parole interviews. Let's focus more closely on these two types.
             </p>
         </section>
         <section id="section18">
@@ -289,7 +271,7 @@
           </section>
           <section id ="section22">
             <p>
-            Here looking at the denied reappearance interviews by age groups, we see that interviews of people 55 OVER make up the largest portion.
+            Here, looking at the denied reappearance interviews by age groups, we see that interviews of people <b>55 and over</b> make up the largest portion.
             </p>
           <p>
             Hover over the bars to find out more.   
@@ -297,48 +279,24 @@
           </section>
           <section id = "section23">
             <p>
-              And if we add in the reappearance interviews that were granted parole, we see that although a significant portion of interviews of people 55 OVER were granted parole, the age group has the largest difference between denials and grants.
+              And if we add in the reappearance interviews that were granted parole, we see that although a significant portion of interviews of people 55 and over were granted parole, the age group has the largest difference between denials and grants.
             </p>
           </section>
           <section id = "section24">
             <p>
-              This exploration into two years of parole interviews in New York State has revealed several interesting trends. Most obvious is that parole is being denied significantly more often than it is being granted. 
-          </p>
-          <p>
-            It's clear race, age, and interview type play significant roles in these decisions. 
+              This exploration into two years of parole interviews in New York State has revealed several interesting trends. 
           </p>
           </section>
-          <section id="conclusion">
-            <p>
-              Black people are denied parole more often than White people.
-            </p>
-            <p>
-                With the exception of those 55 and older, as age goes up, so does the likelihood of being granted parole.
-            </p>
+            <section id="conclusion">
               <p>
-                As an individual serves more and more of their sentence, a granted decision is not guaranteed.
+                Most obvious is that parole is being denied significantly more often than it is being granted. 
               </p>
               <p>
-                Reappearances are denied more often than initial interviews.
+                And it's clear race, age, and interview type play significant roles in these decisions. 
               </p>
             </section>
-
-            <section id="conclusion2">
-              <p>
-                And when you take a more focused look into some of the possible permutations like denied reappearances by age group, there are even more egregious results.
-              </p>
-              <p>
-                Senior individuals who were denied parole at least once before are being denied again and again.
-              </p>
-            </section>
-        
       </div>
       <div id="container" class="svg-container">
-        <!-- <button type="button" class="btn" id="prop_sent_served">prop</button>
-        <button type="button" class="btn" id="time_serv_at_int">time</button>
-        <button type="button" class="btn" id="age">age</button>
-        <button type="button" class="btn" id="age_entered">age entered</button> -->
-        <!-- <button type="button" class="btn" id="time_past_min">past min</button> -->
       </div>
   </body>
 </html>
