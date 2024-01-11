@@ -1431,7 +1431,7 @@ function init() {
         .on("mousemove", function(event, d) {
             tooltip
                 .style("opacity", 1)
-                .html(`${d[0]} interviews <br>make up ${(d[1] * 100).toFixed(2)}% <br>of the total interviews`)
+                .html(`<b>${d[0]}</b> interviews <br>make up <b>${(d[1] * 100).toFixed(2)}%</b> <br>of the total interviews`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 10) + "px");
         })
